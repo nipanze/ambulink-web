@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Ambulance, MapPin, Building2,
-  Settings, LogOut, Bell, ShieldCheck, ChevronRight, X, Users
+  Settings, LogOut, Bell, ShieldCheck, ChevronRight, X, Users, Clock
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
@@ -28,6 +28,11 @@ const institutionLinks = [
   { href: '/bookings',            icon: Ambulance,       label: 'Bookings'    },
   { href: '/institution',         icon: Building2,       label: 'Institution' },
 ]
+const driverLinks = [
+  { href: '/driver',              icon: LayoutDashboard, label: 'Dashboard'  },
+  { href: '/driver/history',      icon: Clock,           label: 'Job History' },
+  { href: '/settings',            icon: Settings,        label: 'Account'     },
+]
 const adminLinks = [
   { href: '/admin',               icon: ShieldCheck,     label: 'Admin'       },
   { href: '/admin/tracking',      icon: MapPin,          label: 'Fleet Tracking'},
@@ -43,6 +48,7 @@ export default function Sidebar({ user, isOpen, onClose }: Props) {
 
   const links =
     user?.role === 'admin'          ? adminLinks :
+    user?.role === 'driver'         ? driverLinks :
     user?.role === 'institution_rep'? institutionLinks :
     patientLinks
 
