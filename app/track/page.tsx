@@ -261,21 +261,72 @@ function TrackingContent() {
               </div>
             </div>
 
-            {booking.driver && (
-              <div className="flex items-center gap-4 p-4 bg-red-50/50 rounded-2xl border border-red-100">
-                <div className="w-14 h-14 rounded-2xl bg-white flex items-center justify-center text-red-600 shadow-sm">
-                  <Ambulance size={28} />
+            {/* Big Hero Countdown Section */}
+            <div className="bg-gradient-to-br from-red-600 to-red-700 rounded-3xl p-8 mb-8 text-white shadow-2xl shadow-red-200 border border-red-500 relative overflow-hidden group">
+              {/* Background Decor */}
+              <div className="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full blur-3xl group-hover:bg-white/20 transition-all duration-1000" />
+              
+              <div className="relative z-10 flex flex-col items-center">
+                <span className="text-[10px] font-black uppercase tracking-[0.3em] opacity-80 mb-4 bg-white/20 px-4 py-1 rounded-full">
+                  Ambulance in Transit
+                </span>
+                
+                <div className="flex items-center gap-4 mb-2">
+                  <span className="text-7xl md:text-8xl font-mono font-black tracking-tighter drop-shadow-xl">
+                    {countdown !== null ? formatCountdown(countdown) : '--:--'}
+                  </span>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Medical Team</p>
-                  <p className="font-black text-gray-900 text-lg truncate">{booking.driver.user?.first_name} {booking.driver.user?.last_name}</p>
-                  <p className="text-sm font-bold text-red-600 mt-0.5">{booking.driver.vehicle_plate}</p>
+                
+                <div className="flex items-center gap-2 text-red-100 font-bold text-sm mb-6 uppercase tracking-wider">
+                  <Navigation size={16} className="animate-pulse" />
+                  <span>{distance || '-- km'} to your location</span>
                 </div>
-                <a href={`tel:${booking.driver.user?.phone ?? ''}`} className="w-12 h-12 bg-white border border-gray-200 rounded-2xl flex items-center justify-center text-gray-900">
-                   <Phone size={20} />
+
+                {/* Visual Progress Bar */}
+                <div className="w-full bg-red-900/40 h-3 rounded-full overflow-hidden border border-red-400/30">
+                  <div 
+                    className="h-full bg-white shadow-[0_0_15px_rgba(255,255,255,0.8)] transition-all duration-1000 ease-out"
+                    style={{ width: `${Math.min(100, Math.max(0, 100 - ((countdown || 600) / 600) * 100))}%` }}
+                  />
+                </div>
+                <div className="w-full flex justify-between mt-2 px-1">
+                  <span className="text-[9px] font-bold uppercase opacity-60">Dispatched</span>
+                  <span className="text-[9px] font-bold uppercase opacity-60 text-right">Arrival</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              <div className="flex items-center justify-between border-b border-gray-100 pb-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center text-gray-400 overflow-hidden relative border-2 border-white shadow-sm">
+                     {booking.driver?.user?.first_name ? (
+                       <div className="absolute inset-0 bg-red-600 flex items-center justify-center text-white font-black text-xl">
+                         {booking.driver.user.first_name[0]}
+                       </div>
+                     ) : <Ambulance size={28} />}
+                  </div>
+                  <div>
+                    <h3 className="font-black text-gray-900 text-lg">{booking.driver?.user?.first_name || 'Dispatching'} {booking.driver?.user?.last_name || 'Driver'}</h3>
+                    <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mt-0.5">{booking.driver?.vehicle_model || 'AmbuLink Medical Unit'}</p>
+                  </div>
+                </div>
+                <a href={`tel:${booking.driver?.user?.phone || ''}`} className="w-12 h-12 rounded-2xl bg-green-500 text-white flex items-center justify-center shadow-lg shadow-green-200 active:scale-95 transition-transform">
+                  <Phone size={24} />
                 </a>
               </div>
-            )}
+
+              <div className="grid grid-cols-2 gap-4">
+                 <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Vehicle Plate</p>
+                    <p className="text-sm font-black text-gray-900">{booking.driver?.vehicle_plate || '---'}</p>
+                 </div>
+                 <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">ETA Basis</p>
+                    <p className="text-sm font-black text-gray-900">Live Traffic</p>
+                 </div>
+              </div>
+            </div>
           </div>
 
           <div className="pt-6 border-t border-gray-50 flex items-center justify-between text-[10px] font-bold text-gray-400 uppercase tracking-wider text-center">
