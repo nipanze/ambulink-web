@@ -16,7 +16,7 @@ async function getAuthedDriver(req: NextRequest) {
 
   const { data: dbUser, error: userErr } = await supabase
     .from('users')
-    .select('id, role')
+    .select('id, email, first_name, last_name, role')
     .eq('email', user.email)
     .single()
 
@@ -28,14 +28,54 @@ async function getAuthedDriver(req: NextRequest) {
     return { supabase, response: NextResponse.json({ error: 'Forbidden' }, { status: 403 }) }
   }
 
-  const { data: driver, error: driverErr } = await supabase
+  let { data: driver, error: driverErr } = await supabase
     .from('drivers')
     .select('*, user:users(*), location:driver_locations(*)')
     .eq('user_id', dbUser.id)
     .single()
 
   if (driverErr || !driver) {
-    return { supabase, response: NextResponse.json({ error: 'Driver profile not found' }, { status: 404 }) }
+    const profileCode = String(dbUser.id).padStart(4, '0')
+    const { data: createdDriver, error: createErr } = await supabase
+      .from('drivers')
+      .upsert({
+        user_id: dbUser.id,
+        license_number: `DL-AUTO-${profileCode}`,
+        vehicle_plate: `AUTO ${profileCode}`,
+        vehicle_type: 'basic',
+        vehicle_model: 'AmbuLink Demo Ambulance',
+        vehicle_color: 'White',
+        coverage_zone: 'Kampala Central',
+        status: 'active',
+        is_online: true,
+        verified_at: new Date().toISOString(),
+      }, { onConflict: 'user_id' })
+      .select('*, user:users(*), location:driver_locations(*)')
+      .single()
+
+    if (createErr || !createdDriver) {
+      console.error('DRIVER_PROFILE_PROVISIONING_ERROR:', createErr || driverErr)
+      return { supabase, response: NextResponse.json({ error: createErr?.message || 'Driver profile not found' }, { status: 500 }) }
+    }
+
+    await supabase
+      .from('driver_locations')
+      .upsert({
+        driver_id: createdDriver.id,
+        latitude: 0.3175,
+        longitude: 32.5783,
+        heading: 45,
+        speed_kmh: 0,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'driver_id' })
+
+    const { data: refreshedDriver } = await supabase
+      .from('drivers')
+      .select('*, user:users(*), location:driver_locations(*)')
+      .eq('id', createdDriver.id)
+      .single()
+
+    driver = refreshedDriver ?? createdDriver
   }
 
   return { supabase, user: dbUser, driver }

@@ -13,6 +13,7 @@ export default function DriverDashboard() {
   const [bookings, setBookings]  = useState<Booking[]>([])
   const [loading,  setLoading]   = useState(true)
   const [updating, setUpdating]  = useState<number | null>(null)
+  const [loadError, setLoadError] = useState('')
 
   const fetchDriverData = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession()
@@ -25,10 +26,13 @@ export default function DriverDashboard() {
        headers: { 'Authorization': `Bearer ${session.access_token}` }
     })
     if (!res.ok) {
+      const payload = await res.json().catch(() => null)
+      setLoadError(payload?.error || 'Driver profile not found')
       setLoading(false)
       return
     }
     const data = await res.json()
+    setLoadError('')
     setDriver(data.driver)
     setBookings(data.bookings ?? [])
     setLoading(false)
@@ -134,7 +138,8 @@ export default function DriverDashboard() {
   if (!driver) return (
     <div className="flex-1 p-8 text-center bg-gray-50">
       <h2 className="text-xl font-black text-gray-900">Driver profile not found</h2>
-      <p className="text-gray-500 mt-2">Please contact admin to verify your account.</p>
+      <p className="text-gray-500 mt-2">{loadError || 'Please contact admin to verify your account.'}</p>
+      <button className="btn-primary mt-5" onClick={fetchDriverData}>Retry</button>
     </div>
   )
 
