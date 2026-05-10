@@ -64,9 +64,19 @@ function TrackingContent({ booking, driver }: { booking: any, driver: any }) {
   const [eta, setEta] = useState<string | null>(null)
   const [distance, setDistance] = useState<string | null>(null)
   const [realCountdown, setRealCountdown] = useState<number | null>(null)
-  const [displayCountdown, setDisplayCountdown] = useState<number | null>(null)
+  const [displayCountdown, setDisplayCountdown] = useState<number | null>(300) // Start at 5 mins for demo
   const [isRecalculating, setIsRecalculating] = useState(false)
+  const [speed, setSpeed] = useState(65)
   const [L, setL] = useState<any>(null)
+
+  // Simulation: Fluctuating Speed
+  useEffect(() => {
+    const speedInterval = setInterval(() => {
+      // Random speed between 45 and 105
+      setSpeed(Math.floor(Math.random() * (105 - 45 + 1)) + 45)
+    }, 2000)
+    return () => clearInterval(speedInterval)
+  }, [])
 
   // Countdown Ticker
   useEffect(() => {
@@ -195,11 +205,22 @@ function TrackingContent({ booking, driver }: { booking: any, driver: any }) {
               <div className="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full blur-3xl" />
               <div className="relative z-10 flex flex-col items-center">
                 <span className={`text-[10px] font-black uppercase tracking-[0.3em] mb-4 px-4 py-2 rounded-xl transition-all duration-500 ${isRecalculating ? 'bg-white text-red-600 animate-pulse' : 'bg-white/20 text-white'}`}>
-                  {isRecalculating ? 'RECALCULATING BEST ROUTE...' : 'Ambulance in Transit'}
+                  {isRecalculating ? 'OPTIMIZING RESCUE PATH...' : 'Emergency Unit En-Route'}
                 </span>
-                <span className={`text-7xl md:text-8xl font-mono font-black tracking-tighter drop-shadow-xl transition-all duration-500 ${isRecalculating ? 'blur-sm scale-95 opacity-50' : 'blur-0 scale-100'}`}>
-                  {displayCountdown !== null ? formatCountdown(displayCountdown) : '--:--'}
-                </span>
+
+                <div className="flex flex-col items-center gap-0">
+                  <span className={`text-7xl md:text-8xl font-mono font-black tracking-tighter drop-shadow-xl transition-all duration-500 ${isRecalculating ? 'blur-sm scale-95 opacity-50' : 'blur-0 scale-100'}`}>
+                    {displayCountdown !== null ? formatCountdown(displayCountdown) : '05:00'}
+                  </span>
+                  
+                  {/* Live Speedometer */}
+                  <div className="flex items-center gap-2 -mt-2 bg-black/20 px-4 py-1 rounded-full backdrop-blur-sm border border-white/10">
+                    <div className={`w-2 h-2 rounded-full ${speed > 80 ? 'bg-red-400 animate-ping' : 'bg-green-400'}`} />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-white italic">
+                      Live Velocity: {speed} KM/H
+                    </span>
+                  </div>
+                </div>
                 <div className="flex items-center gap-2 text-red-100 font-bold text-sm mt-2 mb-6 opacity-80">
                   <Navigation size={14} />
                   <span>{distance || '--'} to your location</span>
