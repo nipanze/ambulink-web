@@ -19,21 +19,16 @@ export async function GET(req: NextRequest) {
       .eq('email', user.email)
       .single()
 
-    if ((error || !dbUser) && user.email?.endsWith('@ambulink.ug')) {
-      // SERVER-SIDE HEAL: Minimal provisioning
-      const { data: created, error: createErr } = await supabase
-        .from('users')
-        .insert([{
-          email: user.email,
-          first_name: user.user_metadata?.first_name || 'Admin',
-          last_name:  user.user_metadata?.last_name || 'User',
-          phone:      user.user_metadata?.phone || '+256000',
-          role:       'admin',
-          password_hash: 'managed'
-        }])
-        .select()
-        .single()
-      
+    if (error || !dbUser) {
+      const fallbackRole = user.user_metadata?.role || (user.email?.endsWith('@ambulink.ug') ? 'admin' : 'patient')
+      const { data: created, error: createErr } = await supabase.rpc('ensure_user_profile', {
+        p_email: user.email,
+        p_first_name: user.user_metadata?.first_name ?? null,
+        p_last_name: user.user_metadata?.last_name ?? null,
+        p_phone: user.user_metadata?.phone ?? null,
+        p_role: fallbackRole,
+      })
+
       if (createErr) {
         console.error('PROVISIONING_ERROR:', createErr)
         throw new Error(`Profile creation failed: ${createErr.message}`)
