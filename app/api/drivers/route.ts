@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
     ? supabase.from('vw_online_drivers').select('*')
     : supabase
         .from('drivers')
-        .select('*, user:users(*), location:driver_locations(*)')
+        .select('*, user:users!user_id(*), location:driver_locations(*)')
         .is('deleted_at', null)
         .order('created_at', { ascending: false })
 

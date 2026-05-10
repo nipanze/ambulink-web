@@ -47,7 +47,7 @@ async function getAuthedDriver(req: NextRequest) {
 
   let { data: driver, error: driverErr } = await supabase
     .from('drivers')
-    .select('*, user:users(*), location:driver_locations(*)')
+    .select('*, user:users!user_id(*), location:driver_locations(*)')
     .eq('user_id', dbUser.id)
     .single()
 
@@ -67,7 +67,7 @@ async function getAuthedDriver(req: NextRequest) {
         is_online: true,
         verified_at: new Date().toISOString(),
       }, { onConflict: 'user_id' })
-      .select('*, user:users(*), location:driver_locations(*)')
+      .select('*, user:users!user_id(*), location:driver_locations(*)')
       .single()
 
     if (createErr || !createdDriver) {
@@ -88,7 +88,7 @@ async function getAuthedDriver(req: NextRequest) {
 
     const { data: refreshedDriver } = await supabase
       .from('drivers')
-      .select('*, user:users(*), location:driver_locations(*)')
+      .select('*, user:users!user_id(*), location:driver_locations(*)')
       .eq('id', createdDriver.id)
       .single()
 
