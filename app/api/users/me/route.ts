@@ -20,21 +20,24 @@ export async function GET(req: NextRequest) {
       .single()
 
     if ((error || !dbUser) && user.email?.endsWith('@ambulink.ug')) {
-      // SERVER-SIDE HEAL: Provision missing admin
+      // SERVER-SIDE HEAL: Minimal provisioning
       const { data: created, error: createErr } = await supabase
         .from('users')
-        .insert({
+        .insert([{
           email: user.email,
-          password_hash: 'managed_by_auth',
-          first_name: user.user_metadata?.first_name || 'Official',
-          last_name:  user.user_metadata?.last_name || 'Admin',
-          phone:      user.user_metadata?.phone || '+256700000001',
-          role:       'admin'
-        })
+          first_name: user.user_metadata?.first_name || 'Admin',
+          last_name:  user.user_metadata?.last_name || 'User',
+          phone:      user.user_metadata?.phone || '+256000',
+          role:       'admin',
+          password_hash: 'managed'
+        }])
         .select()
         .single()
       
-      if (createErr) throw createErr
+      if (createErr) {
+        console.error('PROVISIONING_ERROR:', createErr)
+        throw new Error(`Profile creation failed: ${createErr.message}`)
+      }
       dbUser = created
     }
 
