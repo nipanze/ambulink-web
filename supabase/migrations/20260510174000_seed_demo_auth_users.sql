@@ -8,6 +8,7 @@ WITH demo_users(email, first_name, last_name, phone, role) AS (
     VALUES
         ('admin@ambulink.ug',          'Flavia',  'Namugga', '+256700000001', 'admin'),
         ('driver.ssali@ambulink.ug',   'Godfrey', 'Ssali',   '+256772100001', 'driver'),
+        ('driver.tendo@ambulink.ug',   'Ivan',    'Tendo',   '+256782200002', 'driver'),
         ('patient.mukisa@ambulink.ug', 'Joshua',  'Mukisa',  '+256782200001', 'patient')
 ),
 profiles AS (
@@ -89,7 +90,7 @@ SELECT
     NOW(),
     NOW()
 FROM auth.users u
-WHERE u.email IN ('admin@ambulink.ug', 'driver.ssali@ambulink.ug', 'patient.mukisa@ambulink.ug')
+WHERE u.email IN ('admin@ambulink.ug', 'driver.ssali@ambulink.ug', 'driver.tendo@ambulink.ug', 'patient.mukisa@ambulink.ug')
 ON CONFLICT (provider, provider_id) DO UPDATE SET
     identity_data = EXCLUDED.identity_data,
     updated_at = NOW();

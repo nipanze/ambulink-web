@@ -115,6 +115,7 @@ function LoginForm() {
            <p className="text-yellow-800 font-bold uppercase tracking-widest">Demo Accounts:</p>
            <p className="text-yellow-700">Admin: admin@ambulink.ug / ambulink@2026</p>
            <p className="text-yellow-700">Driver: driver.ssali@ambulink.ug / ambulink@2026</p>
+           <p className="text-yellow-700">Driver: driver.tendo@ambulink.ug / ambulink@2026</p>
            <p className="text-yellow-700">Patient: patient.mukisa@ambulink.ug / ambulink@2026</p>
         </div>
 
