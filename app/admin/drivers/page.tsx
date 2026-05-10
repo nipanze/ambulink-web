@@ -17,11 +17,18 @@ export default function AdminDriversPage() {
   const [search,  setSearch]  = useState('')
 
   async function load() {
-    const { data } = await supabase
+    setLoading(true)
+    const { data, error } = await supabase
       .from('drivers')
       .select('*, user:users!user_id(*)')
       .is('deleted_at', null)
       .order('created_at', { ascending: false })
+    
+    if (error) {
+      console.error('FETCH_DRIVERS_ERROR:', error)
+      toast.error('Failed to load drivers: ' + error.message)
+    }
+    
     setDrivers((data as DriverRow[]) ?? [])
     setLoading(false)
   }
@@ -35,12 +42,15 @@ export default function AdminDriversPage() {
     load()
   }
 
-  const filtered = drivers.filter(d =>
-    !search ||
-    `${d.user.first_name} ${d.user.last_name}`.toLowerCase().includes(search.toLowerCase()) ||
-    d.vehicle_plate.toLowerCase().includes(search.toLowerCase()) ||
-    d.license_number.toLowerCase().includes(search.toLowerCase())
-  )
+  const filtered = drivers.filter(d => {
+    if (!search) return true
+    const name = d.user ? `${d.user.first_name} ${d.user.last_name}` : 'Unknown'
+    return (
+      name.toLowerCase().includes(search.toLowerCase()) ||
+      d.vehicle_plate.toLowerCase().includes(search.toLowerCase()) ||
+      d.license_number.toLowerCase().includes(search.toLowerCase())
+    )
+  })
 
   const statusStyle: Record<string, string> = {
     active:     'bg-green-100 text-green-700',
@@ -81,11 +91,11 @@ export default function AdminDriversPage() {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-red-600 text-xs font-bold">
-                          {d.user.first_name[0]}{d.user.last_name[0]}
+                          {d.user?.first_name?.[0] ?? '?'}{d.user?.last_name?.[0] ?? 'D'}
                         </div>
                         <div>
-                          <p className="font-medium text-gray-800">{d.user.first_name} {d.user.last_name}</p>
-                          <p className="text-xs text-gray-400">{d.user.phone}</p>
+                          <p className="font-medium text-gray-800">{d.user?.first_name ?? 'Unknown'} {d.user?.last_name ?? 'Driver'}</p>
+                          <p className="text-xs text-gray-400">{d.user?.phone ?? d.license_number}</p>
                         </div>
                       </div>
                     </td>
@@ -135,11 +145,11 @@ export default function AdminDriversPage() {
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-red-600 font-black text-sm">
-                      {d.user.first_name[0]}{d.user.last_name[0]}
+                      {d.user?.first_name?.[0] ?? '?'}{d.user?.last_name?.[0] ?? 'D'}
                     </div>
                     <div>
-                      <p className="font-bold text-gray-900">{d.user.first_name} {d.user.last_name}</p>
-                      <p className="text-xs text-gray-500">{d.user.phone}</p>
+                      <p className="font-bold text-gray-900">{d.user?.first_name ?? 'Unknown'} {d.user?.last_name ?? 'Driver'}</p>
+                      <p className="text-xs text-gray-500">{d.user?.phone ?? d.license_number}</p>
                     </div>
                   </div>
                   <div className="flex flex-col items-end gap-1">
