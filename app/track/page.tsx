@@ -159,14 +159,14 @@ function TrackingContent() {
 
   const patientLoc = { lat: Number(booking.pickup_latitude), lng: Number(booking.pickup_longitude) }
   const driverIcon = L ? new L.DivIcon({
-      html: '<div class="text-3xl">🚑</div>',
+      html: '<div class="relative flex items-center justify-center"><div class="absolute w-12 h-12 bg-red-500/20 rounded-full animate-ping"></div><div class="text-4xl drop-shadow-2xl z-10">🚑</div></div>',
       className: 'bg-transparent',
-      iconSize: [40, 40],
-      iconAnchor: [20, 20]
+      iconSize: [48, 48],
+      iconAnchor: [24, 24]
   }) : null;
 
   const patientIcon = L ? new L.DivIcon({
-      html: '<div class="text-3xl">📍</div>',
+      html: '<div class="text-4xl drop-shadow-xl">📍</div>',
       className: 'bg-transparent',
       iconSize: [40, 40],
       iconAnchor: [20, 20]
@@ -178,7 +178,10 @@ function TrackingContent() {
       <div className="h-[45%] md:h-[55%] relative overflow-hidden bg-gray-100 z-10">
         {!loading && typeof window !== 'undefined' && (
           <MapContainer center={[patientLoc.lat, patientLoc.lng]} zoom={15} style={{ height: '100%', width: '100%' }} zoomControl={false}>
-            <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+            <TileLayer 
+              url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+            />
             
             {/* Markers */}
             {booking && <Marker position={[patientLoc.lat, patientLoc.lng]} icon={patientIcon as any} />}

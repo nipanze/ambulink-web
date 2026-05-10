@@ -67,14 +67,14 @@ export default function AdminTrackingPage() {
   }, [loadData])
 
   const driverIcon = L ? new L.DivIcon({
-      html: '<div class="text-2xl transition-all duration-500 scale-110">🚑</div>',
+      html: '<div class="relative flex items-center justify-center"><div class="absolute w-10 h-10 bg-red-500/20 rounded-full animate-ping"></div><div class="text-3xl drop-shadow-lg z-10">🚑</div></div>',
       className: 'bg-transparent',
-      iconSize: [40, 40],
-      iconAnchor: [20, 20]
+      iconSize: [44, 44],
+      iconAnchor: [22, 22]
   }) : null;
 
   const patientIcon = L ? new L.DivIcon({
-      html: '<div class="text-2xl">📍</div>',
+      html: '<div class="text-3xl drop-shadow-md">📍</div>',
       className: 'bg-transparent',
       iconSize: [40, 40],
       iconAnchor: [20, 20]
@@ -82,7 +82,7 @@ export default function AdminTrackingPage() {
 
   return (
     <div className="flex-1 flex flex-col h-full bg-white overflow-hidden">
-      <div className="p-4 md:p-6 border-b border-gray-100 flex items-center justify-between bg-white z-10 shadow-sm relative">
+      <div className="p-4 md:p-6 border-b border-gray-100 flex items-center justify-between bg-white z-20 shadow-sm">
         <div>
           <h1 className="text-2xl font-black text-gray-900 tracking-tight">Fleet Tracking</h1>
           <p className="text-sm text-gray-500 font-medium">Live monitoring dashboard</p>
@@ -104,7 +104,10 @@ export default function AdminTrackingPage() {
         <div className="flex-1 relative bg-gray-100 z-10">
           {!loading && typeof window !== 'undefined' && (
             <MapContainer center={[0.3176, 32.5825]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={false}>
-               <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+               <TileLayer 
+                 url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+               />
                
                {/* Drivers */}
                {drivers.map(d => d.location && (
