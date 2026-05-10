@@ -6,6 +6,12 @@ import { StatusBadge, TypeBadge } from '@/components/shared/Badges'
 import { timeAgo } from '@/lib/utils'
 import type { Booking, Driver } from '@/lib/types'
 import { toast } from 'sonner'
+import dynamic from 'next/dynamic'
+
+const LiveRouteMap = dynamic(() => import('@/components/driver/LiveRouteMap'), { 
+  ssr: false, 
+  loading: () => <div className="h-48 bg-gray-100 rounded-2xl animate-pulse flex items-center justify-center text-xs font-bold text-gray-400 uppercase tracking-widest">Loading Satellite...</div> 
+})
 
 export default function DriverDashboard() {
   const [driver,   setDriver]   = useState<Driver | null>(null)
@@ -216,6 +222,17 @@ export default function DriverDashboard() {
                     </div>
                     <StatusBadge status={b.status} />
                  </div>
+
+                 {['assigned', 'en_route', 'at_scene'].includes(b.status) && b.pickup_latitude && driver?.location && (
+                    <div className="animate-in fade-in slide-in-from-top-4 duration-500">
+                      <LiveRouteMap 
+                        pickupLat={Number(b.pickup_latitude)} 
+                        pickupLng={Number(b.pickup_longitude)}
+                        driverLat={Number(driver.location.latitude)}
+                        driverLng={Number(driver.location.longitude)}
+                      />
+                    </div>
+                  )}
 
                  <div className="space-y-2">
                     <div className="flex items-start gap-3">

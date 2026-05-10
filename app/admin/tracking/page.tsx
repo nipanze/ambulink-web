@@ -1,21 +1,52 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { Loader2, Ambulance, MapPin, Navigation, Info, Map as MapIcon, ExternalLink } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { StatusBadge } from '@/components/shared/Badges'
 import Link from 'next/link'
 
-declare global { interface Window { google: any } }
+// Leaflet Dynamic Imports
+import dynamic from 'next/dynamic'
+import 'leaflet/dist/leaflet.css'
+
+const MapContainer = dynamic(() => import('react-leaflet').then(m => m.MapContainer), { ssr: false })
+const TileLayer = dynamic(() => import('react-leaflet').then(m => m.TileLayer), { ssr: false })
+const Marker = dynamic(() => import('react-leaflet').then(m => m.Marker), { ssr: false })
+const Popup = dynamic(() => import('react-leaflet').then(m => m.Popup), { ssr: false })
+const MapEvents = null; // Removed hook dynamic import
+
+function MapController({ center }: { center: [number, number] | null }) {
+  const map: any = require('react-leaflet').useMap();
+  useEffect(() => {
+    if (center && map) {
+      map.panTo(center, { animate: true });
+    }
+  }, [center, map]);
+  return null;
+}
 
 export default function AdminTrackingPage() {
   const [drivers, setDrivers] = useState<any[]>([])
   const [bookings, setBookings] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const mapRef = useRef<HTMLDivElement>(null)
-  const mapObj = useRef<any>(null)
-  const markers = useRef<Map<string, any>>(new Map())
+  const [L, setL] = useState<any>(null)
+  const [focusLocation, setFocusLocation] = useState<[number, number] | null>(null)
 
-  async function loadData() {
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+        const Leaflet = require('leaflet');
+        // Fix Leaflet marker icons in Next.js
+        delete Leaflet.Icon.Default.prototype._getIconUrl;
+        Leaflet.Icon.Default.mergeOptions({
+            iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+            iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+        });
+        setL(Leaflet);
+    }
+  }, [])
+
+  const loadData = useCallback(async () => {
     const [{ data: drData }, { data: bkData }] = await Promise.all([
       supabase.from('drivers').select('*, user:users!user_id(*), location:driver_locations(*)').eq('status', 'active').eq('is_online', true),
       supabase.from('vw_booking_overview').select('*').in('status', ['requested','assigned','en_route','at_scene','transporting']),
@@ -23,7 +54,7 @@ export default function AdminTrackingPage() {
     setDrivers(drData ?? [])
     setBookings(bkData ?? [])
     setLoading(false)
-  }
+  }, [])
 
   useEffect(() => {
     loadData()
@@ -33,154 +64,150 @@ export default function AdminTrackingPage() {
       supabase.removeChannel(ch1)
       supabase.removeChannel(ch2)
     }
-  }, [])
+  }, [loadData])
 
-  // Map Init
-  const [mapKeyMissing, setMapKeyMissing] = useState(false)
-  useEffect(() => {
-    const key = process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY
-    if (!key || key.startsWith('YOUR_')) {
-      setMapKeyMissing(true)
-      return
-    }
+  const driverIcon = L ? new L.DivIcon({
+      html: '<div class="text-2xl transition-all duration-500 scale-110">🚑</div>',
+      className: 'bg-transparent',
+      iconSize: [40, 40],
+      iconAnchor: [20, 20]
+  }) : null;
 
-    const initMap = () => {
-      if (!mapRef.current || mapObj.current) return
-      mapObj.current = new window.google.maps.Map(mapRef.current, {
-        zoom: 13,
-        center: { lat: 0.3176, lng: 32.5825 }, // Kampala
-        disableDefaultUI: true,
-        zoomControl: true,
-      })
-    }
-
-    if (!window.google) {
-      const script = document.createElement('script')
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${key}`
-      script.async = true
-      script.onload = initMap
-      document.head.appendChild(script)
-    } else {
-      initMap()
-    }
-  }, [])
-
-  // Update Markers
-  useEffect(() => {
-    if (!mapObj.current || !window.google) return
-
-    markers.current.forEach(m => m.setMap(null))
-    markers.current.clear()
-
-    drivers.forEach(d => {
-      if (!d.location) return
-      const m = new window.google.maps.Marker({
-        position: { lat: Number(d.location.latitude), lng: Number(d.location.longitude) },
-        map: mapObj.current,
-        title: `${d.user?.first_name} (${d.vehicle_plate})`,
-        label: { text: "🚑", fontSize: "20px" }
-      })
-      markers.current.set(`driver-${d.id}`, m)
-    })
-
-    bookings.forEach(b => {
-      if (!b.pickup_latitude) return
-      const m = new window.google.maps.Marker({
-        position: { lat: Number(b.pickup_latitude), lng: Number(b.pickup_longitude) },
-        map: mapObj.current,
-        title: `Booking ${b.booking_ref}`,
-        label: { text: "📍", fontSize: "20px" }
-      })
-      markers.current.set(`booking-${b.booking_id}`, m)
-    })
-  }, [drivers, bookings])
+  const patientIcon = L ? new L.DivIcon({
+      html: '<div class="text-2xl">📍</div>',
+      className: 'bg-transparent',
+      iconSize: [40, 40],
+      iconAnchor: [20, 20]
+  }) : null;
 
   return (
     <div className="flex-1 flex flex-col h-full bg-white overflow-hidden">
-      <div className="p-4 md:p-6 border-b border-gray-100 flex items-center justify-between bg-white z-10">
+      <div className="p-4 md:p-6 border-b border-gray-100 flex items-center justify-between bg-white z-10 shadow-sm relative">
         <div>
-          <h1 className="text-2xl font-black text-gray-900">Fleet Tracking</h1>
-          <p className="text-sm text-gray-500">Live overview of all active drivers and emergencies</p>
+          <h1 className="text-2xl font-black text-gray-900 tracking-tight">Fleet Tracking</h1>
+          <p className="text-sm text-gray-500 font-medium">Live monitoring dashboard</p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-green-50 rounded-full border border-green-100">
+          <div className="flex items-center gap-2 px-4 py-2 bg-green-50 rounded-2xl border border-green-100 shadow-sm">
             <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-            <span className="text-xs font-bold text-green-700">{drivers.length} Online</span>
+            <span className="text-xs font-black text-green-700 uppercase tracking-widest">{drivers.length} Online</span>
           </div>
-          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 rounded-full border border-red-100">
+          <div className="flex items-center gap-2 px-4 py-2 bg-red-50 rounded-2xl border border-red-100 shadow-sm">
             <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-            <span className="text-xs font-bold text-red-700">{bookings.length} Active</span>
+            <span className="text-xs font-black text-red-700 uppercase tracking-widest">{bookings.length} SOS</span>
           </div>
         </div>
       </div>
 
       <div className="flex-1 flex flex-col md:flex-row relative overflow-hidden">
         {/* Map Area */}
-        <div className="flex-1 relative bg-gray-100">
-          {mapKeyMissing ? (
-            <div className="absolute inset-0 flex flex-col items-center justify-center p-10 text-center bg-gray-50">
-              <MapIcon size={48} className="text-gray-300 mb-4" />
-              <h2 className="text-lg font-bold text-gray-700">Fleet Map Unavailable</h2>
-              <p className="text-sm text-gray-500 max-w-sm mt-2">
-                Google Maps API key is required to render the live interactive fleet map. 
-                You can still view the live list of emergencies in the sidebar.
-              </p>
-            </div>
-          ) : (
-            <div ref={mapRef} className="h-full w-full" />
+        <div className="flex-1 relative bg-gray-100 z-10">
+          {!loading && typeof window !== 'undefined' && (
+            <MapContainer center={[0.3176, 32.5825]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={false}>
+               <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+               
+               {/* Drivers */}
+               {drivers.map(d => d.location && (
+                  <Marker key={`dr-${d.id}`} position={[Number(d.location.latitude), Number(d.location.longitude)]} icon={driverIcon as any}>
+                    <Popup className="rounded-2xl overflow-hidden font-sans">
+                      <div className="p-1">
+                        <p className="font-black text-gray-900">{d.user?.first_name} {d.user?.last_name}</p>
+                        <p className="text-[10px] font-bold text-red-600 uppercase tracking-widest">{d.vehicle_plate}</p>
+                      </div>
+                    </Popup>
+                  </Marker>
+               ))}
+
+               {/* Bookings */}
+               {bookings.map(b => b.pickup_latitude && (
+                  <Marker key={`bk-${b.booking_id}`} position={[Number(b.pickup_latitude), Number(b.pickup_longitude)]} icon={patientIcon as any}>
+                    <Popup>
+                      <div className="p-1">
+                        <p className="font-bold text-sm">{b.patient_name}</p>
+                        <StatusBadge status={b.status} />
+                      </div>
+                    </Popup>
+                  </Marker>
+               ))}
+
+               {/* Focus Logic */}
+               <MapController center={focusLocation} />
+            </MapContainer>
           )}
+
+          {/* Map Overlays */}
+          <div className="absolute bottom-6 left-6 flex flex-col gap-2 z-[1001]">
+             <div className="p-3 bg-white/90 backdrop-blur-md rounded-2xl shadow-2xl border border-gray-100 text-[10px] font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-red-500 animate-ping" />
+                Live Network Active
+             </div>
+          </div>
         </div>
 
-        {/* Sidebar info */}
-        <div className="w-full md:w-80 bg-white border-l border-gray-100 overflow-y-auto p-4 space-y-6 shadow-2xl z-20">
-          <h2 className="text-sm font-black text-gray-400 uppercase tracking-widest">Active Fleet</h2>
-          
-          <div className="space-y-3">
-            {drivers.length === 0 && !loading && <p className="text-sm text-gray-400 italic">No drivers online</p>}
-            {drivers.map(d => (
-              <div key={d.id} className="p-3 rounded-xl border border-gray-50 bg-gray-50/50 hover:bg-white hover:shadow-md transition-all group">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600">
-                    <Navigation size={20} />
+        {/* Sidebar */}
+        <div className="w-full md:w-96 bg-white border-l border-gray-100 overflow-y-auto p-4 space-y-6 shadow-[-10px_0_40px_-15px_rgba(0,0,0,0.05)] z-20">
+          <div className="space-y-4">
+            <h2 className="text-xs font-black text-gray-400 uppercase tracking-[0.2em]">Active Ambulances</h2>
+            <div className="grid grid-cols-1 gap-3">
+              {drivers.length === 0 && !loading && (
+                <div className="p-8 text-center text-gray-300 font-bold border-2 border-dashed border-gray-100 rounded-3xl">No drivers online</div>
+              )}
+              {drivers.map(d => (
+                <button 
+                  key={d.id} 
+                  onClick={() => d.location && setFocusLocation([Number(d.location.latitude), Number(d.location.longitude)])}
+                  className="p-4 rounded-2xl border border-gray-50 bg-gray-50/50 hover:bg-white hover:shadow-xl hover:scale-[1.02] active:scale-95 transition-all text-left flex items-center gap-4 group"
+                >
+                  <div className="w-12 h-12 rounded-xl bg-red-600 text-white flex items-center justify-center shadow-lg shadow-red-100 group-hover:rotate-12 transition-transform">
+                    <Ambulance size={24} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-bold text-sm text-gray-900 truncate">{d.user?.first_name} {d.user?.last_name}</p>
-                    <p className="text-[10px] font-bold text-blue-600 uppercase tracking-tighter">{d.vehicle_plate} · {d.vehicle_model}</p>
+                    <p className="font-black text-sm text-gray-900 truncate">{d.user?.first_name} {d.user?.last_name}</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                       <span className="text-[10px] font-black text-red-600 uppercase tracking-widest">{d.vehicle_plate}</span>
+                       <span className="w-1 h-1 rounded-full bg-gray-300" />
+                       <span className="text-[10px] font-bold text-gray-400 truncate">{d.vehicle_model}</span>
+                    </div>
                   </div>
-                  {!mapKeyMissing && (
-                    <button className="p-2 text-gray-300 hover:text-red-600 transition-colors" onClick={() => mapObj.current?.panTo({lat: Number(d.location.latitude), lng: Number(d.location.longitude)})}>
-                      <MapPin size={16} />
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
+                </button>
+              ))}
+            </div>
           </div>
 
-          <h2 className="text-sm font-black text-gray-400 uppercase tracking-widest pt-4">Live Emergencies</h2>
-          <div className="space-y-3">
-            {bookings.length === 0 && !loading && <p className="text-sm text-gray-400 italic">No active bookings</p>}
-            {bookings.map(b => (
-              <div key={b.booking_id} className="p-3 rounded-xl border border-red-50 bg-red-50/30 hover:bg-white hover:shadow-md transition-all">
-                <div className="flex justify-between items-start mb-2">
-                  <span className="font-mono text-[10px] text-red-400 font-bold">{b.booking_ref}</span>
-                  <StatusBadge status={b.status} />
+          <div className="space-y-4 pt-4">
+            <h2 className="text-xs font-black text-gray-400 uppercase tracking-[0.2em]">Emergencies Awaiting</h2>
+            <div className="space-y-3">
+              {bookings.length === 0 && !loading && (
+                <div className="p-8 text-center text-gray-300 font-bold border-2 border-dashed border-gray-100 rounded-3xl">Clear Skyline</div>
+              )}
+              {bookings.map(b => (
+                <div key={b.booking_id} className="p-5 rounded-3xl border border-red-50 bg-red-50/30 hover:bg-white hover:shadow-2xl transition-all">
+                  <div className="flex justify-between items-start mb-4">
+                    <span className="font-mono text-[10px] font-black text-red-400 uppercase tracking-tight px-2 py-1 bg-white rounded-lg shadow-sm">{b.booking_ref}</span>
+                    <StatusBadge status={b.status} />
+                  </div>
+                  <p className="font-black text-base text-gray-900 leading-tight mb-2">{b.patient_name}</p>
+                  <div className="flex items-start gap-2 mb-4 text-xs font-medium text-gray-500">
+                    <MapPin size={14} className="text-red-500 shrink-0 mt-0.5" />
+                    <span className="line-clamp-2">{b.pickup_address}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button 
+                      onClick={() => b.pickup_latitude && setFocusLocation([Number(b.pickup_latitude), Number(b.pickup_longitude)])}
+                      className="flex-1 bg-white border border-gray-100 text-[10px] font-black text-gray-900 py-3 rounded-xl uppercase tracking-widest hover:bg-gray-50 transition-colors shadow-sm flex items-center justify-center gap-2"
+                    >
+                      <MapIcon size={12} /> Focus
+                    </button>
+                    <Link 
+                      href={`/admin/bookings?id=${b.booking_id}`}
+                      className="flex-1 bg-red-600 text-white text-[10px] font-black py-3 rounded-xl uppercase tracking-widest hover:bg-red-700 transition-all shadow-lg shadow-red-100 flex items-center justify-center gap-2"
+                    >
+                      Dispatch <ExternalLink size={12} />
+                    </Link>
+                  </div>
                 </div>
-                <p className="font-bold text-sm text-gray-900 leading-tight">{b.patient_name}</p>
-                <div className="flex items-center gap-2 mt-2 text-[10px] text-gray-500">
-                  <MapPin size={10} className="text-red-500" />
-                  <span className="truncate">{b.pickup_address}</span>
-                </div>
-                <div className="mt-3 flex items-center justify-between">
-                  <a href={`https://www.google.com/maps/dir/?api=1&destination=${b.pickup_latitude},${b.pickup_longitude}`} target="_blank" className="text-[10px] font-black text-red-600 uppercase tracking-widest hover:underline flex items-center gap-1">
-                    Route <ExternalLink size={10} />
-                  </a>
-                  <Link href={`/track?booking=${b.booking_id}`} className="text-[10px] font-black text-gray-400 uppercase tracking-widest hover:underline flex items-center gap-1">
-                    Details <Info size={10} />
-                  </Link>
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </div>
