@@ -19,7 +19,7 @@ export default function AdminDriversPage() {
   async function load() {
     const { data } = await supabase
       .from('drivers')
-      .select('*, user:users(*)')
+      .select('*, user:users!user_id(*)')
       .is('deleted_at', null)
       .order('created_at', { ascending: false })
     setDrivers((data as DriverRow[]) ?? [])
