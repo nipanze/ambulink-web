@@ -14,13 +14,30 @@ async function getAuthedDriver(req: NextRequest) {
     return { supabase, response: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) }
   }
 
-  const { data: dbUser, error: userErr } = await supabase
+  let { data: dbUser, error: userErr } = await supabase
     .from('users')
     .select('id, email, first_name, last_name, role')
-    .eq('email', user.email)
+    .eq('email', user.email.toLowerCase())
     .single()
 
   if (userErr || !dbUser) {
+    const fallbackRole = user.user_metadata?.role || (user.email.toLowerCase().startsWith('driver.') ? 'driver' : 'patient')
+    const { data: syncedUser, error: syncErr } = await supabase.rpc('ensure_user_profile', {
+      p_email: user.email,
+      p_first_name: user.user_metadata?.first_name ?? null,
+      p_last_name: user.user_metadata?.last_name ?? null,
+      p_phone: user.user_metadata?.phone ?? null,
+      p_role: fallbackRole,
+    })
+
+    if (syncErr || !syncedUser) {
+      return { supabase, response: NextResponse.json({ error: syncErr?.message || 'User not found' }, { status: 404 }) }
+    }
+
+    dbUser = syncedUser
+  }
+
+  if (!dbUser) {
     return { supabase, response: NextResponse.json({ error: 'User not found' }, { status: 404 }) }
   }
 
