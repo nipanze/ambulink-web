@@ -21,52 +21,27 @@ function LoginForm() {
     e.preventDefault()
     setLoading(true)
     try {
-      const { data: { user: authUser }, error } = await supabase.auth.signInWithPassword({ email, password })
+      const { data: { session }, error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) throw error
 
-      // Get role for redirect
-      const sesh = (await supabase.auth.getSession()).data.session
-      let res = await fetch('/api/users/me', {
-        headers: { 'Authorization': `Bearer ${sesh?.access_token}` }
+      // Call API to get user and trigger any necessary auto-provisioning
+      const res = await fetch('/api/users/me', {
+        headers: { 'Authorization': `Bearer ${session?.access_token}` }
       })
       
-      let dbUser: any = null
-      if (res.status === 404 && email.endsWith('@ambulink.ug')) {
-         toast.loading('Provisioning official admin profile...', { id: 'repair' })
-         // Force-create missing Admin profile
-         const { data: created, error: createErr } = await supabase
-           .from('users')
-           .insert({
-             email,
-             first_name: authUser?.user_metadata?.first_name || 'Official',
-             last_name:  authUser?.user_metadata?.last_name || 'Admin',
-             phone:      authUser?.user_metadata?.phone || '+256700000001',
-             role:       'admin',
-             password_hash: 'managed_by_auth'
-           })
-           .select()
-           .single()
-         
-         if (createErr) {
-            toast.error(`Auto-provisioning failed: ${createErr.message}`, { id: 'repair' })
-            throw new Error('Database sync failed. Please contact AmbuLink IT.')
-         }
-         dbUser = created
-         toast.success('Admin profile provisioned successfully!', { id: 'repair' })
-      } else if (res.ok) {
-        dbUser = await res.json()
+      const dbUser = await res.json()
+      if (!res.ok) {
+        throw new Error(dbUser.error || 'Profile synchronization failed.')
       }
 
-      if (!dbUser) throw new Error('Profile synchronization error. Authentication successful but no AmbuLink record found.')
-      
       let finalRedirect = redirect
       if (redirect === '/dashboard' || !searchParams.has('redirect')) {
-        if (dbUser.role === 'admin') finalRedirect = '/admin'
-        else if (dbUser.role === 'driver') finalRedirect = '/driver'
+        if (dbUser.role === 'admin')           finalRedirect = '/admin'
+        else if (dbUser.role === 'driver')     finalRedirect = '/driver'
         else if (dbUser.role === 'institution_rep') finalRedirect = '/admin'
       }
 
-      toast.success('Welcome back!')
+      toast.success(`Welcome back, ${dbUser.first_name}!`)
       router.push(finalRedirect)
     } catch (err: any) {
       toast.error(err.message || 'Login failed. Please check your credentials.')
@@ -118,29 +93,34 @@ function LoginForm() {
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 onClick={() => setShowPw(v => !v)}
               >
-                {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
+                {showPw ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
           </div>
 
-          <button type="submit" className="btn-primary w-full flex items-center justify-center gap-2" disabled={loading}>
-            {loading ? <Loader2 size={16} className="animate-spin" /> : <AlertCircle size={16} />}
-            {loading ? 'Signing in…' : 'Sign In'}
+          <button
+            type="submit"
+            disabled={loading}
+            className="btn-primary w-full py-3 flex items-center justify-center gap-2 text-base font-bold shadow-xl shadow-red-100"
+          >
+            {loading ? <Loader2 size={20} className="animate-spin" /> : 'Sign In'}
           </button>
         </form>
 
-        {/* Demo credentials hint */}
-        <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-xs text-yellow-800">
-          <strong>Demo:</strong> admin@ambulink.ug / ambulink@2026
+        <div className="mt-6 p-4 bg-yellow-50 rounded-xl border border-yellow-100 text-[10px] space-y-1">
+           <p className="text-yellow-800 font-bold uppercase tracking-widest">Demo Accounts:</p>
+           <p className="text-yellow-700">Admin: admin@ambulink.ug / ambulink@2026</p>
+           <p className="text-yellow-700">Driver: driver.ssali@ambulink.ug / ambulink@2026</p>
+           <p className="text-yellow-700">Patient: patient.mukisa@ambulink.ug / ambulink@2026</p>
         </div>
 
-        <p className="text-center text-sm text-gray-500 mt-4">
-          Don't have an account?{' '}
-          <Link href="/auth/register" className="text-red-600 font-semibold hover:underline">Register</Link>
+        <p className="text-center text-sm text-gray-500 mt-8">
+          Don't have an account? <Link href="/auth/register" className="text-red-600 font-bold hover:underline">Register</Link>
         </p>
-        <p className="text-center mt-2">
-          <Link href="/" className="text-xs text-gray-400 hover:text-gray-600">← Back to home</Link>
-        </p>
+
+        <div className="text-center mt-4">
+           <Link href="/" className="text-xs text-gray-400 hover:text-gray-600">← Back to home</Link>
+        </div>
       </div>
     </div>
   )
@@ -148,11 +128,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={
-       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <Loader2 size={32} className="animate-spin text-red-600" />
-      </div>
-    }>
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-gray-50"><Loader2 className="animate-spin text-red-600" /></div>}>
       <LoginForm />
     </Suspense>
   )

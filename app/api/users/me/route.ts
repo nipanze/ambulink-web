@@ -13,13 +13,32 @@ export async function GET(req: NextRequest) {
     if (authErr || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     // Get DB user
-    const { data: dbUser, error } = await supabase
+    let { data: dbUser, error } = await supabase
       .from('users')
       .select('*')
       .eq('email', user.email)
       .single()
 
-    if (error || !dbUser) return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    if ((error || !dbUser) && user.email?.endsWith('@ambulink.ug')) {
+      // SERVER-SIDE HEAL: Provision missing admin
+      const { data: created, error: createErr } = await supabase
+        .from('users')
+        .insert({
+          email: user.email,
+          password_hash: 'managed_by_auth',
+          first_name: user.user_metadata?.first_name || 'Official',
+          last_name:  user.user_metadata?.last_name || 'Admin',
+          phone:      user.user_metadata?.phone || '+256700000001',
+          role:       'admin'
+        })
+        .select()
+        .single()
+      
+      if (createErr) throw createErr
+      dbUser = created
+    }
+
+    if (!dbUser) return NextResponse.json({ error: 'User profile not found' }, { status: 404 })
 
     return NextResponse.json(dbUser)
   } catch (err: any) {
