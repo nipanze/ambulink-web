@@ -20,6 +20,15 @@ export default function DriverDashboard() {
   const [loading,  setLoading]   = useState(true)
   const [updating, setUpdating]  = useState<number | null>(null)
   const [loadError, setLoadError] = useState('')
+  const [speed, setSpeed] = useState(65)
+
+  // Simulation: Fluctuating Speed for Demo
+  useEffect(() => {
+    const speedInterval = setInterval(() => {
+      setSpeed(Math.floor(Math.random() * (105 - 45 + 1)) + 45)
+    }, 2500)
+    return () => clearInterval(speedInterval)
+  }, [])
 
   const fetchDriverData = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession()
@@ -224,13 +233,18 @@ export default function DriverDashboard() {
                  </div>
 
                  {['assigned', 'en_route', 'at_scene'].includes(b.status) && b.pickup_latitude && driver?.location && (
-                    <div className="animate-in fade-in slide-in-from-top-4 duration-500">
+                    <div className="animate-in fade-in slide-in-from-top-4 duration-500 relative">
                       <LiveRouteMap 
                         pickupLat={Number(b.pickup_latitude)} 
                         pickupLng={Number(b.pickup_longitude)}
                         driverLat={Number(driver.location.latitude)}
                         driverLng={Number(driver.location.longitude)}
                       />
+                      {/* Demo Speed Overlay for Driver */}
+                      <div className="absolute bottom-3 right-3 bg-black/80 backdrop-blur-md px-3 py-1 rounded-lg border border-white/20 z-[1000] flex items-center gap-2">
+                        <div className={`w-1.5 h-1.5 rounded-full ${speed > 80 ? 'bg-red-500 animate-ping' : 'bg-green-500'}`} />
+                        <span className="text-[9px] font-black text-white uppercase tracking-widest italic">{speed} KM/H</span>
+                      </div>
                     </div>
                   )}
 
