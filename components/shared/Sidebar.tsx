@@ -47,10 +47,10 @@ export default function Sidebar({ user, isOpen, onClose }: Props) {
   const router   = useRouter()
 
   const links =
-    user?.role === 'admin'          ? adminLinks :
-    user?.role === 'driver'         ? driverLinks :
-    user?.role === 'institution_rep'? institutionLinks :
-    patientLinks
+    user?.role === 'admin' ? adminLinks :
+    user?.role === 'driver' ? driverLinks :
+    user?.role === 'institution_rep' ? institutionLinks :
+    user?.role === 'patient' ? patientLinks : []
 
   async function handleLogout() {
     await supabase.auth.signOut()
