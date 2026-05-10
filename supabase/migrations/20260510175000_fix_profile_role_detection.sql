@@ -51,6 +51,7 @@ BEGIN
         phone      = COALESCE(EXCLUDED.phone, public.users.phone),
         role       = CASE
             WHEN public.users.email = 'admin@ambulink.ug' THEN 'admin'::public.user_role
+            WHEN EXCLUDED.role IN ('patient', 'driver', 'institution_rep') THEN EXCLUDED.role
             ELSE public.users.role
         END,
         updated_at = NOW()
@@ -78,3 +79,14 @@ UPDATE auth.users
 SET raw_user_meta_data = COALESCE(raw_user_meta_data, '{}'::jsonb)
     || jsonb_build_object('role', 'driver')
 WHERE email = 'driver.ssali@ambulink.ug';
+
+UPDATE public.users
+SET role = 'patient'::public.user_role,
+    updated_at = NOW()
+WHERE email = 'patient.mukisa@ambulink.ug'
+  AND role <> 'patient'::public.user_role;
+
+UPDATE auth.users
+SET raw_user_meta_data = COALESCE(raw_user_meta_data, '{}'::jsonb)
+    || jsonb_build_object('role', 'patient')
+WHERE email = 'patient.mukisa@ambulink.ug';
