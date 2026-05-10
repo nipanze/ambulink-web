@@ -21,34 +21,16 @@ export default function DriverDashboard() {
       return
     }
 
-    // Get DB user
-    const userRes = await fetch('/api/users/me', {
+    const res = await fetch('/api/drivers/me', {
        headers: { 'Authorization': `Bearer ${session.access_token}` }
     })
-    if (!userRes.ok) {
+    if (!res.ok) {
       setLoading(false)
       return
     }
-    const dbUser = await userRes.json()
-
-    // Get Driver details
-    const { data: drData } = await supabase
-      .from('drivers')
-      .select('*, user:users(*)')
-      .eq('user_id', dbUser.id)
-      .single()
-
-    if (drData) {
-      setDriver(drData)
-      // Fetch bookings for this driver
-      const { data: bkData } = await supabase
-        .from('bookings')
-        .select('*, patient:patients!patient_id(*, user:users!user_id(*))')
-        .eq('driver_id', drData.id)
-        .order('created_at', { ascending: false })
-      
-      setBookings(bkData ?? [])
-    }
+    const data = await res.json()
+    setDriver(data.driver)
+    setBookings(data.bookings ?? [])
     setLoading(false)
   }, [])
 
@@ -70,13 +52,22 @@ export default function DriverDashboard() {
     const watchId = navigator.geolocation.watchPosition(
       async (pos) => {
         const { latitude, longitude, heading, speed } = pos.coords
-        await supabase.from('driver_locations').upsert({
-          driver_id: driver.id,
-          latitude,
-          longitude,
-          heading:   heading ?? 0,
-          speed_kmh: (speed ?? 0) * 3.6,
-          updated_at: new Date().toISOString()
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session) return
+        await fetch('/api/drivers/me', {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            location: {
+              latitude,
+              longitude,
+              heading: heading ?? 0,
+              speed_kmh: (speed ?? 0) * 3.6,
+            },
+          }),
         })
       },
       (err) => console.error('Geo Error:', err),
@@ -89,24 +80,39 @@ export default function DriverDashboard() {
   async function toggleOnline() {
      if (!driver) return
      const newStatus = !driver.is_online
-     const { error } = await supabase
-       .from('drivers')
-       .update({ is_online: newStatus })
-       .eq('id', driver.id)
+     const { data: { session } } = await supabase.auth.getSession()
+     if (!session) return
+     const res = await fetch('/api/drivers/me', {
+       method: 'PATCH',
+       headers: {
+         'Content-Type': 'application/json',
+         'Authorization': `Bearer ${session.access_token}`,
+       },
+       body: JSON.stringify({ is_online: newStatus }),
+     })
      
-     if (error) toast.error('Failed to update status')
-     else toast.success(newStatus ? 'You are now ONLINE' : 'You are now OFFLINE')
+     if (!res.ok) toast.error('Failed to update status')
+     else {
+       toast.success(newStatus ? 'You are now ONLINE' : 'You are now OFFLINE')
+       fetchDriverData()
+     }
   }
 
   async function updateBookingStatus(bookingId: number, nextStatus: string) {
     setUpdating(bookingId)
     try {
-      const { error } = await supabase
-        .from('bookings')
-        .update({ status: nextStatus, updated_at: new Date().toISOString() })
-        .eq('id', bookingId)
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) throw new Error('Please sign in again')
+      const res = await fetch('/api/drivers/me', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ booking_id: bookingId, status: nextStatus }),
+      })
       
-      if (error) throw error
+      if (!res.ok) throw new Error('Update failed')
       toast.success(`Status updated to ${nextStatus.replace('_', ' ')}`)
       fetchDriverData()
     } catch (err: any) {
