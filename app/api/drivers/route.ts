@@ -7,8 +7,13 @@ export async function GET(req: NextRequest) {
 
   const online = searchParams.get('online')
 
-  let query = supabase.from('vw_online_drivers').select('*')
-  if (online === '1') query = query.eq('is_online', true)
+  const query = online === '1'
+    ? supabase.from('vw_online_drivers').select('*')
+    : supabase
+        .from('drivers')
+        .select('*, user:users(*), location:driver_locations(*)')
+        .is('deleted_at', null)
+        .order('created_at', { ascending: false })
 
   const { data, error } = await query
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

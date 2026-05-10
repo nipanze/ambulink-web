@@ -43,7 +43,20 @@ export async function GET(req: NextRequest) {
 
     if (!dbUser) return NextResponse.json({ error: 'User profile not found' }, { status: 404 })
 
-    return NextResponse.json(dbUser)
+    // Fetch Profile Details
+    let enrichedUser = { ...dbUser }
+    if (dbUser.role === 'patient') {
+      const { data: p } = await supabase.from('patients').select('*').eq('user_id', dbUser.id).single()
+      if (p) enrichedUser = { ...enrichedUser, patient_profile: p }
+    } else if (dbUser.role === 'driver') {
+      const { data: d } = await supabase.from('drivers').select('*').eq('user_id', dbUser.id).single()
+      if (d) enrichedUser = { ...enrichedUser, driver_profile: d }
+    } else if (dbUser.role === 'institution_rep') {
+      const { data: r } = await supabase.from('institution_reps').select('*, institution:institutions(*)').eq('user_id', dbUser.id).single()
+      if (r) enrichedUser = { ...enrichedUser, rep_profile: r }
+    }
+
+    return NextResponse.json(enrichedUser)
   } catch (err: any) {
     console.error('GET /api/users/me:', err)
     return NextResponse.json({ error: err.message }, { status: 500 })

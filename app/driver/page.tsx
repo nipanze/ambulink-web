@@ -36,7 +36,7 @@ export default function DriverDashboard() {
       // Fetch bookings for this driver
       const { data: bkData } = await supabase
         .from('bookings')
-        .select('*, patient:users!patient_id(*)')
+        .select('*, patient:patients!patient_id(*, user:users!user_id(*))')
         .eq('driver_id', drData.id)
         .order('created_at', { ascending: false })
       
@@ -194,7 +194,7 @@ export default function DriverDashboard() {
                  <div className="flex justify-between items-start">
                     <div>
                        <span className="font-mono text-[10px] text-gray-400 font-bold">{b.booking_ref}</span>
-                       <h3 className="text-lg font-black text-gray-900">{(b.patient as any)?.first_name} {(b.patient as any)?.last_name}</h3>
+                       <h3 className="text-lg font-black text-gray-900">{b.patient?.user?.first_name} {b.patient?.user?.last_name}</h3>
                     </div>
                     <StatusBadge status={b.status} />
                  </div>
@@ -218,7 +218,7 @@ export default function DriverDashboard() {
                  </div>
 
                  <div className="flex gap-2">
-                    <a href={`tel:${(b.patient as any)?.phone}`} className="flex-1 flex items-center justify-center gap-2 bg-gray-100 rounded-xl p-3 text-gray-900 font-black text-xs hover:bg-gray-200 transition-all">
+                    <a href={`tel:${b.patient?.user?.phone ?? ''}`} className="flex-1 flex items-center justify-center gap-2 bg-gray-100 rounded-xl p-3 text-gray-900 font-black text-xs hover:bg-gray-200 transition-all">
                        <Phone size={14} /> CALL PATIENT
                     </a>
                     <a href={`https://www.google.com/maps/dir/?api=1&destination=${b.pickup_latitude},${b.pickup_longitude}`} target="_blank" className="flex-1 flex items-center justify-center gap-2 bg-blue-600 rounded-xl p-3 text-white font-black text-xs shadow-lg shadow-blue-100">

@@ -42,12 +42,15 @@ export default function DashboardPage() {
       return
     }
 
-    const { data } = await supabase
-      .from('bookings')
-      .select('*')
-      .eq('patient_id', dbUser.id)
-      .order('created_at', { ascending: false })
-      .limit(10)
+    const patientId = dbUser.patient_profile?.id
+    const { data } = patientId
+      ? await supabase
+          .from('bookings')
+          .select('*')
+          .eq('patient_id', patientId)
+          .order('created_at', { ascending: false })
+          .limit(10)
+      : { data: [] }
 
     setBookings(data ?? [])
     setLoading(false)

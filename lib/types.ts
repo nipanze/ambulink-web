@@ -22,6 +22,9 @@ export type RoadCorridor =
   | 'kampala_jinja' | 'kampala_masaka' | 'kampala_mbarara'
   | 'kampala_gulu'  | 'kampala_fort_portal' | 'kampala_mbale' | 'other'
 
+export type BloodGroup = 'A+' | 'A-' | 'B+' | 'B-' | 'AB+' | 'AB-' | 'O+' | 'O-' | 'unknown'
+export type GenderType = 'male' | 'female' | 'other' | 'prefer_not_to_say'
+
 // ── Entity interfaces ──────────────────────────────────────
 
 export interface User {
@@ -36,6 +39,31 @@ export interface User {
   last_login?:   string
   created_at:    string
   updated_at:    string
+}
+
+export interface Patient {
+  id:                      number
+  user_id:                 number
+  date_of_birth?:          string
+  gender?:                 GenderType
+  profile_photo_url?:      string
+  national_id?:            string
+  blood_group:             BloodGroup
+  allergies?:              string
+  chronic_conditions?:     string
+  current_medications?:    string
+  disability_notes?:       string
+  emergency_contact_name?: string
+  emergency_contact_phone?:string
+  emergency_contact_rel?:  string
+  preferred_hospital?:     string
+  preferred_language:      string
+  total_bookings:          number
+  total_completed:         number
+  total_cancelled:         number
+  created_at:              string
+  // joined
+  user?:                   User
 }
 
 export interface Driver {
@@ -114,7 +142,8 @@ export interface Booking {
   created_at:            string
   updated_at:            string
   // joined
-  patient?:              User
+  patient?:               Patient
+  patient_profile?:      Patient
   driver?:               Driver
   institution?:          Institution
 }
@@ -128,6 +157,10 @@ export interface BookingOverview {
   patient_name:      string
   patient_phone:     string
   patient_email:     string
+  blood_group?:      BloodGroup
+  allergies?:        string
+  emergency_contact_name?: string
+  emergency_contact_phone?:string
   pickup_address:    string
   pickup_latitude:   number
   pickup_longitude:  number

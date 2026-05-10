@@ -33,7 +33,7 @@ function TrackingContent() {
 
     let query = supabase
       .from('bookings')
-      .select('*, patient:users!patient_id(*), driver:drivers!driver_id(*, user:users!user_id(*), location:driver_locations(*))')
+      .select('*, patient:patients!patient_id(*, user:users!user_id(*)), driver:drivers!driver_id(*, user:users!user_id(*), location:driver_locations(*))')
     
     if (bookingId) {
       query = query.eq('id', bookingId)

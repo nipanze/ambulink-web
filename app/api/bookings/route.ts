@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase'
-import { generateBookingRef } from '@/lib/utils'
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,17 +13,38 @@ export async function POST(req: NextRequest) {
     const { data: { user }, error: authErr } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''))
     if (authErr || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    // Get DB user
-    const { data: dbUser } = await supabase.from('users').select('id').eq('email', user.email).single()
+    // Get DB user and the patient profile id used by bookings.patient_id.
+    const { data: dbUser } = await supabase
+      .from('users')
+      .select('id, role, patient_profile:patients(id)')
+      .eq('email', user.email)
+      .single()
     if (!dbUser) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
-    const bookingRef = generateBookingRef()
+    const dbUserRecord = dbUser as {
+      id: number
+      patient_profile?: { id: number } | { id: number }[] | null
+    }
+    let patientId = Array.isArray(dbUserRecord.patient_profile)
+      ? dbUserRecord.patient_profile[0]?.id
+      : dbUserRecord.patient_profile?.id
+
+    if (!patientId) {
+      const { data: patient, error: patientErr } = await supabase
+        .from('patients')
+        .upsert({ user_id: dbUserRecord.id }, { onConflict: 'user_id' })
+        .select('id')
+        .single()
+
+      if (patientErr) throw patientErr
+      patientId = patient.id
+    }
 
     const { data: booking, error } = await supabase
       .from('bookings')
       .insert({
-        booking_ref:         bookingRef,
-        patient_id:          dbUser.id,
+        booking_ref:         body.booking_ref ?? null,
+        patient_id:          patientId,
         type:                body.type ?? 'emergency',
         status:              'requested',
         pickup_latitude:     body.pickup_latitude,
