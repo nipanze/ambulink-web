@@ -17,7 +17,7 @@ export default function AdminBookingsPage() {
     let q = supabase.from('vw_booking_overview').select('*').order('created_at', { ascending: false }).limit(100)
     if (status !== 'all') q = q.eq('status', status)
     const { data } = await q
-    setBookings(data ?? [])
+    setBookings((data as BookingOverview[]) ?? [])
     setLoading(false)
   }
 

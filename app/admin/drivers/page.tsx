@@ -22,7 +22,7 @@ export default function AdminDriversPage() {
       .select('*, user:users(*)')
       .is('deleted_at', null)
       .order('created_at', { ascending: false })
-    setDrivers(data ?? [])
+    setDrivers((data as DriverRow[]) ?? [])
     setLoading(false)
   }
 
