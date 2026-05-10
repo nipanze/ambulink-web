@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
@@ -8,7 +8,7 @@ import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 import type { UserRole } from '@/lib/types'
 
-export default function RegisterPage() {
+function RegisterForm() {
   const router       = useRouter()
   const searchParams = useSearchParams()
   const defaultRole  = (searchParams.get('role') || 'patient') as UserRole
@@ -27,7 +27,6 @@ export default function RegisterPage() {
 
     setLoading(true)
     try {
-      // 1. Create auth user
       const { data: authData, error: authErr } = await supabase.auth.signUp({
         email: form.email,
         password: form.password,
@@ -35,7 +34,6 @@ export default function RegisterPage() {
       })
       if (authErr) throw authErr
 
-      // 2. Insert into users table via API route
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -120,5 +118,17 @@ export default function RegisterPage() {
         </p>
       </div>
     </div>
+  )
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={
+       <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Loader2 size={32} className="animate-spin text-red-600" />
+      </div>
+    }>
+      <RegisterForm />
+    </Suspense>
   )
 }

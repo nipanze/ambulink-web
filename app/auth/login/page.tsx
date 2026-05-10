@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
@@ -7,7 +7,7 @@ import { AlertCircle, Eye, EyeOff, Loader2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 
-export default function LoginPage() {
+function LoginForm() {
   const router       = useRouter()
   const searchParams = useSearchParams()
   const redirect     = searchParams.get('redirect') || '/dashboard'
@@ -100,5 +100,17 @@ export default function LoginPage() {
         </p>
       </div>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+       <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Loader2 size={32} className="animate-spin text-red-600" />
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   )
 }

@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Loader2, Phone, MapPin, Clock, Navigation, Ambulance, User, ShieldCheck } from 'lucide-react'
@@ -10,7 +10,7 @@ import type { Booking } from '@/lib/types'
 
 declare global { interface Window { google: any } }
 
-export default function TrackPage() {
+function TrackingContent() {
   const searchParams = useSearchParams()
   const bookingId    = searchParams.get('booking')
 
@@ -334,5 +334,20 @@ export default function TrackPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function TrackPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex-1 flex items-center justify-center bg-gray-50 h-screen">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 size={32} className="animate-spin text-red-600" />
+          <p className="text-sm font-medium text-gray-500">Loading Tracking Engine…</p>
+        </div>
+      </div>
+    }>
+      <TrackingContent />
+    </Suspense>
   )
 }
