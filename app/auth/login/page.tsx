@@ -32,28 +32,32 @@ function LoginForm() {
       
       let dbUser: any = null
       if (res.status === 404 && email.endsWith('@ambulink.ug')) {
-         // Auto-provision admin
-         const createRes = await fetch('/api/auth/register', {
-           method: 'POST',
-           headers: { 'Content-Type': 'application/json' },
-           body: JSON.stringify({
+         toast.loading('Provisioning official admin profile...', { id: 'repair' })
+         // Force-create missing Admin profile
+         const { data: created, error: createErr } = await supabase
+           .from('users')
+           .insert({
              email,
-             first_name: authUser?.user_metadata?.first_name || 'Admin',
-             last_name:  authUser?.user_metadata?.last_name || 'Staff',
-             phone:      authUser?.user_metadata?.phone || '+256000000000',
+             first_name: authUser?.user_metadata?.first_name || 'Official',
+             last_name:  authUser?.user_metadata?.last_name || 'Admin',
+             phone:      authUser?.user_metadata?.phone || '+256700000001',
              role:       'admin',
-             auth_id:    authUser?.id
+             password_hash: 'managed_by_auth'
            })
-         })
-         if (createRes.ok) {
-           const created = await createRes.json()
-           dbUser = created.user
+           .select()
+           .single()
+         
+         if (createErr) {
+            toast.error(`Auto-provisioning failed: ${createErr.message}`, { id: 'repair' })
+            throw new Error('Database sync failed. Please contact AmbuLink IT.')
          }
+         dbUser = created
+         toast.success('Admin profile provisioned successfully!', { id: 'repair' })
       } else if (res.ok) {
         dbUser = await res.json()
       }
 
-      if (!dbUser) throw new Error('Profile synchronization error. Please check your account status.')
+      if (!dbUser) throw new Error('Profile synchronization error. Authentication successful but no AmbuLink record found.')
       
       let finalRedirect = redirect
       if (redirect === '/dashboard' || !searchParams.has('redirect')) {
