@@ -74,7 +74,7 @@ export default function TrackPage() {
       .on('postgres_changes', {
         event: 'UPDATE', schema: 'public', table: 'bookings',
         filter: `id=eq.${booking.id}`
-      }, payload => setBooking(prev => ({ ...prev, ...payload.new } as Booking)))
+      }, (payload: any) => setBooking(prev => ({ ...prev, ...payload.new } as Booking)))
       .subscribe()
 
     return () => { 
@@ -93,7 +93,7 @@ export default function TrackPage() {
         schema: 'public', 
         table: 'driver_locations',
         filter: `driver_id=eq.${booking.driver_id}`
-      }, payload => {
+      }, (payload: any) => {
         const newLoc = payload.new as any
         if (newLoc) {
           setDriverLoc({ 
