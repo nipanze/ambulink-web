@@ -21,13 +21,19 @@ export default function InstitutionPage() {
   useEffect(() => {
     async function fetchPortalData() {
       const { data: { session } } = await supabase.auth.getSession()
-      if (!session) return
+      if (!session) {
+        setLoading(false)
+        return
+      }
 
       // Resolve DB user via secure API
       const userRes = await fetch('/api/users/me', {
         headers: { 'Authorization': `Bearer ${session.access_token}` }
       })
-      if (!userRes.ok) return
+      if (!userRes.ok) {
+        setLoading(false)
+        return
+      }
       const dbUser = await userRes.json()
 
       // Resolve institution ID for this representative
@@ -61,11 +67,13 @@ export default function InstitutionPage() {
   async function submitBooking() {
     try {
       const { data: { session } } = await supabase.auth.getSession()
+      if (!session) throw new Error('Please sign in before submitting a booking')
+      if (!institutionId) throw new Error('Institution profile is not linked to this account')
       const res = await fetch('/api/bookings', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.access_token}`
+          'Authorization': `Bearer ${session.access_token}`
         },
         body: JSON.stringify({
           ...form,

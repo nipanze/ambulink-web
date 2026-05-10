@@ -45,6 +45,8 @@ export default function AuthenticatedLayout({ children }: { children: React.Reac
           window.location.href = '/admin'
        } else if (user.role === 'driver' && !path.startsWith('/driver')) {
           window.location.href = '/driver'
+       } else if (user.role === 'institution_rep' && !path.startsWith('/institution') && !path.startsWith('/settings') && !path.startsWith('/notifications')) {
+          window.location.href = '/institution'
        }
     }
   }, [user, loading])

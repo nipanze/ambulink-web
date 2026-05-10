@@ -16,12 +16,19 @@ export default function DriverDashboard() {
 
   const fetchDriverData = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession()
-    if (!session) return
+    if (!session) {
+      setLoading(false)
+      return
+    }
 
     // Get DB user
     const userRes = await fetch('/api/users/me', {
        headers: { 'Authorization': `Bearer ${session.access_token}` }
     })
+    if (!userRes.ok) {
+      setLoading(false)
+      return
+    }
     const dbUser = await userRes.json()
 
     // Get Driver details
@@ -194,7 +201,7 @@ export default function DriverDashboard() {
                  <div className="flex justify-between items-start">
                     <div>
                        <span className="font-mono text-[10px] text-gray-400 font-bold">{b.booking_ref}</span>
-                       <h3 className="text-lg font-black text-gray-900">{b.patient?.user?.first_name} {b.patient?.user?.last_name}</h3>
+                       <h3 className="text-lg font-black text-gray-900">{b.patient?.user?.first_name || 'Patient'} {b.patient?.user?.last_name || ''}</h3>
                     </div>
                     <StatusBadge status={b.status} />
                  </div>

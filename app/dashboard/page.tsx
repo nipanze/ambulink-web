@@ -19,13 +19,19 @@ export default function DashboardPage() {
 
   const fetchBookings = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession()
-    if (!session) return
+    if (!session) {
+      setLoading(false)
+      return
+    }
 
     // Get DB user via secure API
     const userRes = await fetch('/api/users/me', {
       headers: { 'Authorization': `Bearer ${session.access_token}` }
     })
-    if (!userRes.ok) return
+    if (!userRes.ok) {
+      setLoading(false)
+      return
+    }
     const dbUser = await userRes.json()
 
     // Redirect non-patients
@@ -76,11 +82,12 @@ export default function DashboardPage() {
       ).catch(() => null)
 
       const { data: { session } } = await supabase.auth.getSession()
+      if (!session) throw new Error('Please sign in before sending an SOS request')
       const res = await fetch('/api/bookings', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.access_token}`
+          'Authorization': `Bearer ${session.access_token}`
         },
         body: JSON.stringify({
           type: 'emergency',

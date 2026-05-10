@@ -17,7 +17,10 @@ export default function SettingsPage() {
   useEffect(() => {
     async function fetchProfile() {
       const { data: { session } } = await supabase.auth.getSession()
-      if (!session) return
+      if (!session) {
+        setLoading(false)
+        return
+      }
 
       const res = await fetch('/api/users/me', {
         headers: { 'Authorization': `Bearer ${session.access_token}` }
@@ -39,7 +42,11 @@ export default function SettingsPage() {
   async function handleSave() {
     setSaving(true)
     const { data: { session } } = await supabase.auth.getSession()
-    if (!session) return
+    if (!session) {
+      setSaving(false)
+      toast.error('Please sign in to update your profile')
+      return
+    }
 
     try {
       const res = await fetch('/api/users/me', {

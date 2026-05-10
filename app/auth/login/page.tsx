@@ -38,7 +38,7 @@ function LoginForm() {
       if (redirect === '/dashboard' || !searchParams.has('redirect')) {
         if (dbUser.role === 'admin')           finalRedirect = '/admin'
         else if (dbUser.role === 'driver')     finalRedirect = '/driver'
-        else if (dbUser.role === 'institution_rep') finalRedirect = '/admin'
+        else if (dbUser.role === 'institution_rep') finalRedirect = '/institution'
       }
 
       toast.success(`Welcome back, ${dbUser.first_name}!`)

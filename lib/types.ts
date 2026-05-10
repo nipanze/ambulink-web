@@ -29,16 +29,22 @@ export type GenderType = 'male' | 'female' | 'other' | 'prefer_not_to_say'
 
 export interface User {
   id:            number
-  email:         string
-  first_name:    string
-  last_name:     string
-  phone:         string
+  email:         string | null
+  first_name:    string | null
+  last_name:     string | null
+  phone:         string | null
   role:          UserRole
-  fcm_token?:    string
+  fcm_token?:    string | null
   is_active:     boolean
-  last_login?:   string
+  last_login?:   string | null
   created_at:    string
   updated_at:    string
+}
+
+export interface CurrentUser extends User {
+  patient_profile?: Patient
+  driver_profile?: Driver
+  rep_profile?: InstitutionRep
 }
 
 export interface Patient {
@@ -107,6 +113,16 @@ export interface Institution {
   website?:       string
   status:         InstitutionStatus
   created_at:     string
+}
+
+export interface InstitutionRep {
+  id:             number
+  user_id:        number
+  institution_id: number
+  job_title?:     string | null
+  is_primary:     boolean
+  created_at:     string
+  institution?:   Institution
 }
 
 export interface Booking {

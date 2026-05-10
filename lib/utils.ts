@@ -14,14 +14,6 @@ export function haversineKm(
 
 function deg2rad(d: number) { return d * (Math.PI / 180) }
 
-// ── Booking ref generator ──────────────────────────────────
-export function generateBookingRef(): string {
-  const now = new Date()
-  const date = now.toISOString().slice(0, 10).replace(/-/g, '')
-  const seq  = String(Math.floor(Math.random() * 9999) + 1).padStart(4, '0')
-  return `AMB-${date}-${seq}`
-}
-
 // ── Status label colours ───────────────────────────────────
 export function statusColor(status: string): string {
   const map: Record<string, string> = {

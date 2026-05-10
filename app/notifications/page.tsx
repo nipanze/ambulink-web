@@ -13,7 +13,10 @@ export default function NotificationsPage() {
 
   const fetchNotifs = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession()
-    if (!session) return
+    if (!session) {
+      setLoading(false)
+      return
+    }
 
     try {
       const res = await fetch('/api/notifications', {
@@ -55,7 +58,10 @@ export default function NotificationsPage() {
   async function markAllAsRead() {
     setActionLoading(true)
     const { data: { session } } = await supabase.auth.getSession()
-    if (!session) return
+    if (!session) {
+      setActionLoading(false)
+      return
+    }
 
     try {
       const res = await fetch('/api/notifications', {

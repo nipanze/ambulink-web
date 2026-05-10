@@ -17,7 +17,7 @@ export default function AdminTrackingPage() {
 
   async function loadData() {
     const [{ data: drData }, { data: bkData }] = await Promise.all([
-      supabase.from('drivers').select('*, user:users(*), location:driver_locations(*)').eq('status', 'online'),
+      supabase.from('drivers').select('*, user:users(*), location:driver_locations(*)').eq('status', 'active').eq('is_online', true),
       supabase.from('vw_booking_overview').select('*').in('status', ['requested','assigned','en_route','at_scene','transporting']),
     ])
     setDrivers(drData ?? [])

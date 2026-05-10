@@ -1,5 +1,5 @@
 import { initializeApp, getApps } from 'firebase/app'
-import { getMessaging, getToken, onMessage } from 'firebase/messaging'
+import { getMessaging, getToken, onMessage, type MessagePayload } from 'firebase/messaging'
 
 const firebaseConfig = {
   apiKey:            process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -11,8 +11,19 @@ const firebaseConfig = {
 
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0]
 
+function hasFirebaseMessagingConfig() {
+  return Boolean(
+    firebaseConfig.apiKey &&
+    firebaseConfig.projectId &&
+    firebaseConfig.messagingSenderId &&
+    firebaseConfig.appId &&
+    process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY
+  )
+}
+
 export async function requestNotificationPermission(): Promise<string | null> {
   if (typeof window === 'undefined') return null
+  if (!hasFirebaseMessagingConfig() || !('Notification' in window)) return null
   try {
     const messaging = getMessaging(app)
     const permission = await Notification.requestPermission()
@@ -27,8 +38,9 @@ export async function requestNotificationPermission(): Promise<string | null> {
   }
 }
 
-export function onForegroundMessage(callback: (payload: any) => void) {
+export function onForegroundMessage(callback: (payload: MessagePayload) => void) {
   if (typeof window === 'undefined') return
+  if (!hasFirebaseMessagingConfig()) return
   const messaging = getMessaging(app)
   return onMessage(messaging, callback)
 }

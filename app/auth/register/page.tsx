@@ -27,10 +27,10 @@ function RegisterForm() {
 
     setLoading(true)
     try {
-      const { data: authData, error: authErr } = await supabase.auth.signUp({
+      const { error: authErr } = await supabase.auth.signUp({
         email: form.email,
         password: form.password,
-        options: { data: { first_name: form.first_name, last_name: form.last_name, role: form.role } }
+        options: { data: { first_name: form.first_name, last_name: form.last_name, phone: form.phone, role: form.role } }
       })
       if (authErr) throw authErr
 
@@ -40,7 +40,7 @@ function RegisterForm() {
         body: JSON.stringify({
           email: form.email, first_name: form.first_name,
           last_name: form.last_name, phone: form.phone,
-          role: form.role, auth_id: authData.user?.id,
+          role: form.role,
         }),
       })
       if (!res.ok) throw new Error(await res.text())

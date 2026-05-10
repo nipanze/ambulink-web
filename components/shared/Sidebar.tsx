@@ -24,9 +24,8 @@ const patientLinks = [
   { href: '/track',               icon: MapPin,          label: 'Track'       },
 ]
 const institutionLinks = [
-  { href: '/dashboard',           icon: LayoutDashboard, label: 'Dashboard'  },
-  { href: '/bookings',            icon: Ambulance,       label: 'Bookings'    },
   { href: '/institution',         icon: Building2,       label: 'Institution' },
+  { href: '/bookings',            icon: Ambulance,       label: 'Bookings'    },
 ]
 const driverLinks = [
   { href: '/driver',              icon: LayoutDashboard, label: 'Dashboard'  },
@@ -57,6 +56,9 @@ export default function Sidebar({ user, isOpen, onClose }: Props) {
     toast.success('Signed out')
     router.push('/')
   }
+
+  const firstName = user?.first_name || 'AmbuLink'
+  const lastName = user?.last_name || 'User'
 
   return (
     <>
@@ -90,10 +92,10 @@ export default function Sidebar({ user, isOpen, onClose }: Props) {
           <div className="px-4 py-3 border-b border-gray-100">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-red-600 font-bold text-sm">
-                {user.first_name[0]}{user.last_name[0]}
+                {firstName[0]}{lastName[0]}
               </div>
               <div className="min-w-0">
-                <p className="text-sm font-semibold truncate">{user.first_name} {user.last_name}</p>
+                <p className="text-sm font-semibold truncate">{firstName} {lastName}</p>
                 <p className="text-xs text-gray-400 capitalize">{user.role.replace('_', ' ')}</p>
               </div>
             </div>

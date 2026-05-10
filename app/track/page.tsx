@@ -317,12 +317,12 @@ function TrackingContent() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Ambulance Team</p>
-                <p className="font-black text-gray-900 text-lg leading-tight truncate">{(booking.driver as any).user?.first_name} {(booking.driver as any).user?.last_name}</p>
+                <p className="font-black text-gray-900 text-lg leading-tight truncate">{booking.driver.user?.first_name || 'Ambulance'} {booking.driver.user?.last_name || 'Driver'}</p>
                 <p className="text-sm font-bold text-red-600 mt-0.5">
-                  {(booking.driver as any).vehicle_plate} · {(booking.driver as any).vehicle_model}
+                  {booking.driver.vehicle_plate} · {booking.driver.vehicle_model || 'Ambulance'}
                 </p>
               </div>
-              <a href={`tel:${(booking.driver as any).user?.phone}`} className="w-12 h-12 bg-white border border-gray-200 rounded-2xl flex items-center justify-center text-gray-900 shadow-sm">
+              <a href={`tel:${booking.driver.user?.phone ?? ''}`} className="w-12 h-12 bg-white border border-gray-200 rounded-2xl flex items-center justify-center text-gray-900 shadow-sm">
                  <Phone size={20} />
               </a>
             </div>
