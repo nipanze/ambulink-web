@@ -1,8 +1,5 @@
--- Cloud-safe profile sync for Supabase Auth users.
--- Run this in Supabase SQL Editor if login shows:
--- "Profile creation failed: permission denied for schema public".
-
-GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
+-- Fix role fallback so driver/patient @ambulink.ug accounts do not become admins.
+-- Run this if you already ran 20260510173000_profile_sync_rpc.sql.
 
 CREATE OR REPLACE FUNCTION public.ensure_user_profile(
     p_email      TEXT,
@@ -52,6 +49,10 @@ BEGIN
         first_name = COALESCE(NULLIF(EXCLUDED.first_name, ''), public.users.first_name),
         last_name  = COALESCE(NULLIF(EXCLUDED.last_name,  ''), public.users.last_name),
         phone      = COALESCE(EXCLUDED.phone, public.users.phone),
+        role       = CASE
+            WHEN public.users.email = 'admin@ambulink.ug' THEN 'admin'::public.user_role
+            ELSE public.users.role
+        END,
         updated_at = NOW()
     RETURNING * INTO v_user;
 
@@ -67,35 +68,13 @@ $$;
 
 GRANT EXECUTE ON FUNCTION public.ensure_user_profile(TEXT, TEXT, TEXT, TEXT, TEXT) TO anon, authenticated, service_role;
 
-CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS TRIGGER
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path TO public
-AS $$
-DECLARE
-    synced_user public.users;
-BEGIN
-    SELECT *
-    INTO synced_user
-    FROM public.ensure_user_profile(
-        NEW.email,
-        NEW.raw_user_meta_data->>'first_name',
-        NEW.raw_user_meta_data->>'last_name',
-        NEW.raw_user_meta_data->>'phone',
-        NEW.raw_user_meta_data->>'role'
-    );
+UPDATE public.users
+SET role = 'driver'::public.user_role,
+    updated_at = NOW()
+WHERE email = 'driver.ssali@ambulink.ug'
+  AND role <> 'driver'::public.user_role;
 
-    UPDATE auth.users
-    SET raw_user_meta_data = COALESCE(raw_user_meta_data, '{}'::jsonb)
-        || jsonb_build_object('db_user_id', synced_user.id)
-    WHERE id = NEW.id;
-
-    RETURN NEW;
-END;
-$$;
-
-DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
-CREATE TRIGGER on_auth_user_created
-    AFTER INSERT ON auth.users
-    FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
+UPDATE auth.users
+SET raw_user_meta_data = COALESCE(raw_user_meta_data, '{}'::jsonb)
+    || jsonb_build_object('role', 'driver')
+WHERE email = 'driver.ssali@ambulink.ug';

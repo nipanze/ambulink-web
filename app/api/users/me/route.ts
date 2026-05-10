@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
       .single()
 
     if (error || !dbUser) {
-      const fallbackRole = user.user_metadata?.role || (user.email?.endsWith('@ambulink.ug') ? 'admin' : 'patient')
+      const fallbackRole = user.user_metadata?.role || (user.email === 'admin@ambulink.ug' ? 'admin' : 'patient')
       const { data: created, error: createErr } = await supabase.rpc('ensure_user_profile', {
         p_email: user.email,
         p_first_name: user.user_metadata?.first_name ?? null,
