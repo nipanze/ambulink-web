@@ -15,7 +15,7 @@ export default function AdminAnalyticsPage() {
 
   useEffect(() => {
     supabase.from('vw_daily_stats').select('*').limit(30)
-      .then(({ data }) => {
+      .then(({ data }: { data: DailyStats[] | null }) => {
         setStats((data ?? []).reverse())
         setLoading(false)
       })
