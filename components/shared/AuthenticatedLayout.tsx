@@ -40,14 +40,16 @@ export default function AuthenticatedLayout({ children }: { children: React.Reac
   useEffect(() => {
     if (user && !loading) {
        // Force role-based redirection
-       const path = window.location.pathname
-       if (user.role === 'admin' && !path.startsWith('/admin')) {
-          window.location.href = '/admin'
-       } else if (user.role === 'driver' && !path.startsWith('/driver')) {
-          window.location.href = '/driver'
-       } else if (user.role === 'institution_rep' && !path.startsWith('/institution') && !path.startsWith('/settings') && !path.startsWith('/notifications')) {
-          window.location.href = '/institution'
-       }
+        const path = window.location.pathname
+        const isCommonPath = path.startsWith('/settings') || path.startsWith('/notifications')
+        
+        if (user.role === 'admin' && !path.startsWith('/admin') && !isCommonPath) {
+           window.location.href = '/admin'
+        } else if (user.role === 'driver' && !path.startsWith('/driver') && !isCommonPath) {
+           window.location.href = '/driver'
+        } else if (user.role === 'institution_rep' && !path.startsWith('/institution') && !isCommonPath) {
+           window.location.href = '/institution'
+        }
     }
   }, [user, loading])
 
