@@ -37,14 +37,40 @@ export default function AuthenticatedLayout({ children }: { children: React.Reac
     resolveUser()
   }, [])
 
+  useEffect(() => {
+    if (user && !loading) {
+       // Force role-based redirection
+       const path = window.location.pathname
+       if (user.role === 'admin' && !path.startsWith('/admin')) {
+          window.location.href = '/admin'
+       } else if (user.role === 'driver' && !path.startsWith('/driver')) {
+          window.location.href = '/driver'
+       }
+    }
+  }, [user, loading])
+
   if (loading) return (
-    <div className="h-screen w-full flex items-center justify-center bg-gray-50">
-      <div className="flex flex-col items-center gap-3">
-        <Image src="/images/icon.png" alt="Logo" width={48} height={48} className="animate-pulse" />
-        <p className="text-xs font-black text-red-600 uppercase tracking-widest">Identifying Session…</p>
-      </div>
+    <div className="h-screen w-full flex items-center justify-center bg-gray-50 flex-col gap-4">
+      <Loader2 size={40} className="animate-spin text-red-600" />
+      <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Verifying Authority…</p>
     </div>
   )
+
+  if (!user) {
+    return (
+      <div className="h-screen w-full flex items-center justify-center bg-red-50 flex-col p-6 text-center">
+        <Image src="/images/icon.png" alt="Logo" width={64} height={64} className="mb-6" />
+        <h2 className="text-xl font-black text-gray-900">Profile Synchronization Error</h2>
+        <p className="text-sm text-gray-500 max-w-xs mt-2">
+          Your auth session is active but we couldn't find your AmbuLink profile. 
+          Please sign out and sign in again.
+        </p>
+        <button onClick={() => supabase.auth.signOut().then(() => window.location.href = '/auth/login')} className="mt-6 btn-primary px-8">
+           Return to Login
+        </button>
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col md:flex-row h-screen bg-gray-50 overflow-hidden">
