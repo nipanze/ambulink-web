@@ -23,6 +23,7 @@ function TrackingContent() {
   const mapObj = useRef<any>(null)
   const patientMarker = useRef<any>(null)
   const ambulanceMarker = useRef<any>(null)
+  const directionsRenderer = useRef<any>(null)
 
   const fetchBooking = useCallback(async () => {
     const bookingId = searchParams.get('booking')
@@ -136,6 +137,16 @@ function TrackingContent() {
           { featureType: 'transit', stylers: [{ visibility: 'off' }] }
         ]
       })
+
+      directionsRenderer.current = new window.google.maps.DirectionsRenderer({
+        map: mapObj.current,
+        suppressMarkers: true, // We have our own markers
+        polylineOptions: {
+          strokeColor: '#ef4444', // Red-600
+          strokeWeight: 4,
+          strokeOpacity: 0.8
+        }
+      })
     }
 
     if (!window.google) {
@@ -183,16 +194,17 @@ function TrackingContent() {
       if (statusWithPan.includes(booking.status)) {
         mapObj.current.panTo(driverLoc)
         
-        // Calculate ETA
+        // Calculate ETA & Route
         if (window.google) {
-          const service = new window.google.maps.DistanceMatrixService()
-          service.getDistanceMatrix({
-            origins: [driverLoc],
-            destinations: [{ lat: Number(booking.pickup_latitude), lng: Number(booking.pickup_longitude) }],
+          const service = new window.google.maps.DirectionsService()
+          service.route({
+            origin: driverLoc,
+            destination: { lat: Number(booking.pickup_latitude), lng: Number(booking.pickup_longitude) },
             travelMode: 'DRIVING'
-          }, (response: any, status: string) => {
-            if (status === 'OK' && response.rows[0].elements[0].duration) {
-              setEta(response.rows[0].elements[0].duration.text)
+          }, (result: any, status: string) => {
+            if (status === 'OK' && result.routes[0].legs[0]) {
+              setEta(result.routes[0].legs[0].duration.text)
+              directionsRenderer.current?.setDirections(result)
             }
           })
         }
@@ -273,8 +285,8 @@ function TrackingContent() {
           </div>
 
           {eta && (
-            <div className="bg-red-600 text-white rounded-2xl shadow-xl px-4 py-3 flex flex-col items-center justify-center pointer-events-auto border-2 border-white animate-in slide-in-from-right duration-500">
-              <span className="text-[10px] font-black uppercase tracking-widest opacity-80 leading-none mb-1">Arriving In</span>
+            <div className="bg-red-600 text-white rounded-2xl shadow-xl px-4 py-3 flex flex-col items-center justify-center pointer-events-auto border-2 border-white animate-pulse-slow">
+              <span className="text-[10px] font-black uppercase tracking-widest opacity-80 leading-none mb-1">Ambulance Arriving</span>
               <span className="text-xl font-black leading-none">{eta}</span>
             </div>
           )}
