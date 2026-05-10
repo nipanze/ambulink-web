@@ -23,12 +23,13 @@ export default function AdminDashboard() {
       ])
       setOverview(ovData ?? [])
       setStats((stData ?? []).reverse())
-      const users = uData ?? []
+      const users = (uData as { role: string }[]) ?? []
+      const insts = (iData as { status: string }[]) ?? []
       setCounts({
         drivers:      users.filter(u => u.role === 'driver').length,
         patients:     users.filter(u => u.role === 'patient').length,
-        institutions: (iData ?? []).filter(i => i.status === 'active').length,
-        pending:      (iData ?? []).filter(i => i.status === 'pending').length,
+        institutions: insts.filter(i => i.status === 'active').length,
+        pending:      insts.filter(i => i.status === 'pending').length,
       })
       setLoading(false)
     }
