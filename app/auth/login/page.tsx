@@ -21,7 +21,8 @@ function LoginForm() {
     e.preventDefault()
     setLoading(true)
     try {
-      const { data: { session }, error } = await supabase.auth.signInWithPassword({ email, password })
+      const normalizedEmail = email.trim().toLowerCase()
+      const { data: { session }, error } = await supabase.auth.signInWithPassword({ email: normalizedEmail, password })
       if (error) throw error
 
       // Call API to get user and trigger any necessary auto-provisioning
@@ -44,7 +45,10 @@ function LoginForm() {
       toast.success(`Welcome back, ${dbUser.first_name}!`)
       router.push(finalRedirect)
     } catch (err: any) {
-      toast.error(err.message || 'Login failed. Please check your credentials.')
+      const message = err.message === 'Invalid login credentials'
+        ? 'Invalid login credentials. Use the full demo email, for example driver.ssali@ambulink.ug, and make sure demo Auth users are seeded.'
+        : err.message || 'Login failed. Please check your credentials.'
+      toast.error(message)
     } finally {
       setLoading(false)
     }

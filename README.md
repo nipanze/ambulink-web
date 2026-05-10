@@ -160,11 +160,9 @@ flutter run
 
 | Role | Email | Password |
 |---|---|---|
-| Admin | admin@ambulance.ug | ambulance@2026 |
-| Driver 1 (Urban) | driver1@ambulance.ug | ambulance@2026 |
-| Driver 2 (Highway) | driver2@ambulance.ug | ambulance@2026 |
-| Patient / User | user@ambulance.ug | ambulance@2026 |
-| Institutional Rep | institution@ambulance.ug | ambulance@2026 |
+| Admin | admin@ambulink.ug | ambulink@2026 |
+| Driver | driver.ssali@ambulink.ug | ambulink@2026 |
+| Patient / User | patient.mukisa@ambulink.ug | ambulink@2026 |
 
 ---
 
