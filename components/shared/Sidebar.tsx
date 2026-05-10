@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Ambulance, MapPin, Building2,
-  Settings, LogOut, Bell, ShieldCheck, ChevronRight, X
+  Settings, LogOut, Bell, ShieldCheck, ChevronRight, X, Users
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
@@ -30,8 +30,9 @@ const institutionLinks = [
 ]
 const adminLinks = [
   { href: '/admin',               icon: ShieldCheck,     label: 'Admin'       },
+  { href: '/admin/tracking',      icon: MapPin,          label: 'Fleet Tracking'},
   { href: '/admin/bookings',      icon: Ambulance,       label: 'All Bookings'},
-  { href: '/admin/drivers',       icon: MapPin,          label: 'Drivers'     },
+  { href: '/admin/drivers',       icon: Users,           label: 'Drivers'     },
   { href: '/admin/institutions',  icon: Building2,       label: 'Institutions'},
   { href: '/admin/analytics',     icon: LayoutDashboard, label: 'Analytics'   },
 ]

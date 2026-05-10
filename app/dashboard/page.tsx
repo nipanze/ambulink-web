@@ -28,6 +28,20 @@ export default function DashboardPage() {
     if (!userRes.ok) return
     const dbUser = await userRes.json()
 
+    // Redirect non-patients
+    if (dbUser.role === 'admin') {
+      window.location.href = '/admin'
+      return
+    }
+    if (dbUser.role === 'driver') {
+      window.location.href = '/driver' // assuming driver dashboard exists
+      return
+    }
+    if (dbUser.role === 'institution_rep') {
+      window.location.href = '/institution'
+      return
+    }
+
     const { data } = await supabase
       .from('bookings')
       .select('*')

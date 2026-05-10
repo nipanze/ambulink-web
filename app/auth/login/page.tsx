@@ -21,10 +21,24 @@ function LoginForm() {
     e.preventDefault()
     setLoading(true)
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
+      const { data: { user: authUser }, error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) throw error
+
+      // Get role for redirect
+      const res = await fetch('/api/users/me', {
+        headers: { 'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}` }
+      })
+      const dbUser = await res.json()
+      
+      let finalRedirect = redirect
+      if (redirect === '/dashboard' || !searchParams.has('redirect')) {
+        if (dbUser.role === 'admin') finalRedirect = '/admin'
+        else if (dbUser.role === 'driver') finalRedirect = '/driver' // assuming driver exists
+        else if (dbUser.role === 'institution_rep') finalRedirect = '/institution'
+      }
+
       toast.success('Welcome back!')
-      router.push(redirect)
+      router.push(finalRedirect)
     } catch (err: any) {
       toast.error(err.message || 'Login failed. Please check your credentials.')
     } finally {
