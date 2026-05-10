@@ -41,14 +41,14 @@ VALUES
 (1,  'admin@ambulink.ug',         '$2b$12$hsqbYaw0n/FY9M7hU0i9ju.8/dxPP03CGh4zeZy6xGCX4qAFBYRgu', 'System',   'Admin',    '+256700000001', 'admin',           'fcm_admin_001',   TRUE, NOW() - INTERVAL '1 hour'),
 
 -- Patients
-(2,  'nakato.sarah@gmail.com',    '$2b$12$hsqbYaw0n/FY9M7hU0i9ju.8/dxPP03CGh4zeZy6xGCX4qAFBYRgu', 'Sarah',    'Nakato',   '+256772100001', 'patient',         'fcm_pat_001',     TRUE, NOW() - INTERVAL '2 hours'),
+(2,  'patient.mukisa@ambulink.ug',    '$2b$12$hsqbYaw0n/FY9M7hU0i9ju.8/dxPP03CGh4zeZy6xGCX4qAFBYRgu', 'John',     'Mukisa',   '+256772100001', 'patient',         'fcm_pat_001',     TRUE, NOW() - INTERVAL '2 hours'),
 (3,  'ochieng.james@gmail.com',   '$2b$12$hsqbYaw0n/FY9M7hU0i9ju.8/dxPP03CGh4zeZy6xGCX4qAFBYRgu', 'James',    'Ochieng',  '+256772100002', 'patient',         'fcm_pat_002',     TRUE, NOW() - INTERVAL '1 day'),
 (4,  'mutesi.grace@gmail.com',    '$2b$12$hsqbYaw0n/FY9M7hU0i9ju.8/dxPP03CGh4zeZy6xGCX4qAFBYRgu', 'Grace',    'Mutesi',   '+256772100003', 'patient',         'fcm_pat_003',     TRUE, NOW() - INTERVAL '3 days'),
 (5,  'ssemakula.david@gmail.com', '$2b$12$hsqbYaw0n/FY9M7hU0i9ju.8/dxPP03CGh4zeZy6xGCX4qAFBYRgu', 'David',    'Ssemakula','+256772100004', 'patient',         'fcm_pat_004',     TRUE, NOW() - INTERVAL '5 days'),
 (6,  'atim.florence@gmail.com',   '$2b$12$hsqbYaw0n/FY9M7hU0i9ju.8/dxPP03CGh4zeZy6xGCX4qAFBYRgu', 'Florence', 'Atim',     '+256772100005', 'patient',         'fcm_pat_005',     TRUE, NOW() - INTERVAL '7 days'),
 
 -- Drivers
-(7,  'driver.mukasa@ambulink.ug', '$2b$12$hsqbYaw0n/FY9M7hU0i9ju.8/dxPP03CGh4zeZy6xGCX4qAFBYRgu', 'Ronald',   'Mukasa',   '+256782200001', 'driver',          'fcm_drv_001',     TRUE, NOW() - INTERVAL '30 minutes'),
+(7,  'driver.ssali@ambulink.ug',  '$2b$12$hsqbYaw0n/FY9M7hU0i9ju.8/dxPP03CGh4zeZy6xGCX4qAFBYRgu', 'Godfrey',  'Ssali',    '+256782200001', 'driver',          'fcm_drv_001',     TRUE, NOW() - INTERVAL '30 minutes'),
 (8,  'driver.tendo@ambulink.ug',  '$2b$12$hsqbYaw0n/FY9M7hU0i9ju.8/dxPP03CGh4zeZy6xGCX4qAFBYRgu', 'Ivan',     'Tendo',    '+256782200002', 'driver',          'fcm_drv_002',     TRUE, NOW() - INTERVAL '2 hours'),
 (9,  'driver.nkosi@ambulink.ug',  '$2b$12$hsqbYaw0n/FY9M7hU0i9ju.8/dxPP03CGh4zeZy6xGCX4qAFBYRgu', 'Peter',    'Nkosi',    '+256782200003', 'driver',          'fcm_drv_003',     TRUE, NOW() - INTERVAL '4 hours'),
 (10, 'driver.apio@ambulink.ug',   '$2b$12$hsqbYaw0n/FY9M7hU0i9ju.8/dxPP03CGh4zeZy6xGCX4qAFBYRgu', 'Agnes',    'Apio',     '+256782200004', 'driver',          'fcm_drv_004',     TRUE, NOW() - INTERVAL '1 day'),
@@ -78,9 +78,9 @@ SELECT setval('users_id_seq', 20, true);
 INSERT INTO sessions (session_id, user_id, device_info, ip_address, expires_at)
 VALUES
 ('sess_admin_abc123',   1,  'Mozilla/5.0 Chrome/124 Windows 10',         '41.210.20.1',   NOW() + INTERVAL '7 days'),
-('sess_sarah_xyz789',   2,  'Dart/3.3 (dart:io) Flutter/3.19 Android 13','41.210.20.15',  NOW() + INTERVAL '30 days'),
+('sess_john_xyz789',    2,  'Dart/3.3 (dart:io) Flutter/3.19 Android 13','41.210.20.15',  NOW() + INTERVAL '30 days'),
 ('sess_james_lmn456',   3,  'Dart/3.3 (dart:io) Flutter/3.19 Android 12','41.210.20.22',  NOW() + INTERVAL '30 days'),
-('sess_mukasa_drv001',  7,  'Dart/3.3 (dart:io) Flutter/3.19 Android 14','41.210.20.55',  NOW() + INTERVAL '30 days'),
+('sess_ssali_drv001',  7,  'Dart/3.3 (dart:io) Flutter/3.19 Android 14','41.210.20.55',  NOW() + INTERVAL '30 days'),
 ('sess_tendo_drv002',   8,  'Dart/3.3 (dart:io) Flutter/3.19 Android 13','41.210.20.60',  NOW() + INTERVAL '30 days'),
 ('sess_harriet_rep001', 12, 'Mozilla/5.0 Chrome/124 Ubuntu',             '41.210.21.100', NOW() + INTERVAL '7 days');
 
@@ -98,7 +98,7 @@ INSERT INTO patients
      total_bookings, total_completed, total_cancelled,
      verified_at)
 VALUES
-(1,  2,  '1992-04-15', 'female',              'CM9200415001A', 'O+',      'Penicillin',               'Hypertension',         'Amlodipine 5mg',            NULL,                   'Joseph Nakato',    '+256772900001', 'Husband',  'Mulago National Referral Hospital', 'English', 4, 3, 1, NOW() - INTERVAL '30 days'),
+(1,  2,  '1992-04-15', 'male',              'CM9200415001A', 'O+',      'Penicillin',               'Hypertension',         'Amlodipine 5mg',            NULL,                   'Mary Mukisa',      '+256772900001', 'Wife',     'Mulago National Referral Hospital', 'English', 4, 3, 1, NOW() - INTERVAL '30 days'),
 (2,  3,  '1985-11-22', 'male',                'CM8501122002B', 'A+',      NULL,                       'Diabetes Type 2',      'Metformin 500mg',           NULL,                   'Mary Ochieng',     '+256772900002', 'Wife',     'Kampala International Hospital',    'English', 2, 2, 0, NOW() - INTERVAL '60 days'),
 (3,  4,  '2000-07-08', 'female',              'CM0000708003C', 'B+',      'Latex, Sulfonamides',      NULL,                   NULL,                        NULL,                   'Patrick Mutesi',   '+256772900003', 'Brother',  'Case Medical Centre',               'Luganda', 1, 1, 0, NOW() - INTERVAL '15 days'),
 (4,  5,  '1978-03-30', 'male',                'CM7800330004D', 'AB-',     'Aspirin',                  'Asthma, Hypertension', 'Salbutamol inhaler, Losartan','Wheelchair user',    'Alice Ssemakula',  '+256772900004', 'Spouse',   'Mulago National Referral Hospital', 'English', 3, 2, 1, NOW() - INTERVAL '45 days'),
@@ -197,7 +197,7 @@ INSERT INTO bookings
      fare_amount, payment_status)
 VALUES
 
--- 1. Completed emergency — Sarah Nakato, driver Ronald Mukasa
+-- 1. Completed emergency — John Mukisa, driver Godfrey Ssali
 (1,  'AMB-20260101-0001', 1, 1, NULL,  'emergency',    'completed',
  0.3312, 32.5779, 'Nakasero, Kampala',                 'Near Shell Nakasero',
  'Mulago National Referral Hospital', 0.3406, 32.5699, 'Upper Mulago Hill Road, Kampala',
@@ -218,7 +218,7 @@ VALUES
  NOW()-INTERVAL '10 days', NOW()-INTERVAL '10 days 5m', NOW()-INTERVAL '10 days'+INTERVAL '5m', NOW()-INTERVAL '10 days'+INTERVAL '30m', NULL, NULL,
  3.8, 25, FALSE, 'Post-op follow-up appointment', NULL, NULL, 45000, 'paid'),
 
--- 4. Completed institutional — David Ssemakula, driver Ronald Mukasa, institution KCCA
+-- 4. Completed institutional — David Ssemakula, driver Godfrey Ssali, institution KCCA
 (4,  'AMB-20260120-0004', 4, 1, 3, 'institutional', 'completed',
  0.3163, 32.5822, 'City Hall, Kampala',                'KCCA City Hall Entrance',
  'Mulago National Referral Hospital', 0.3406, 32.5699, 'Upper Mulago Hill Road, Kampala',
@@ -239,7 +239,7 @@ VALUES
  NULL, NULL, NULL, NULL, NOW()-INTERVAL '5 days', 'Patient found own transport before driver arrived',
  NULL, NULL, FALSE, 'Severe abdominal pain', NULL, NULL, NULL, 'unpaid'),
 
--- 7. Active — en_route — Sarah Nakato, driver Peter Nkosi
+-- 7. Active — en_route — John Mukisa, driver Peter Nkosi
 (7,  'AMB-20260508-0007', 1, 3, NULL,  'emergency',    'en_route',
  0.3476, 32.5825, 'Nakasero Road, Kampala',            'Uchumi Supermarket Nakasero',
  'St. Francis Hospital Nsambya',      0.2960, 32.5912, 'Nsambya Road, Kampala',
@@ -260,7 +260,7 @@ VALUES
  NULL, NULL, NULL, NULL, NULL, NULL,
  NULL, NULL, FALSE, 'High fever, convulsions', NULL, NULL, NULL, 'unpaid'),
 
--- 10. Scheduled (future) — John Mugabi, driver Ronald Mukasa
+-- 10. Scheduled (future) — John Mugabi, driver Godfrey Ssali
 (10, 'AMB-20260512-0010', 10, 1, NULL,  'scheduled',   'assigned',
  0.3200, 32.5820, 'Kololo, Kampala',                   'Kololo Airstrip Road',
  'Mulago National Referral Hospital', 0.3406, 32.5699, 'Upper Mulago Hill Road, Kampala',
@@ -292,7 +292,7 @@ SELECT setval('bookings_id_seq', 12, true);
 INSERT INTO booking_status_history (booking_id, from_status, to_status, actor_id, note)
 VALUES
 -- Booking 1
-(1, 'requested',    'assigned',    1, 'Driver Ronald Mukasa auto-assigned'),
+(1, 'requested',    'assigned',    1, 'Driver Godfrey Ssali auto-assigned'),
 (1, 'assigned',     'en_route',    7, 'Driver confirmed and heading to pickup'),
 (1, 'en_route',     'at_scene',    7, 'Driver arrived at Nakasero'),
 (1, 'at_scene',     'transporting',7, 'Patient loaded'),
@@ -352,10 +352,10 @@ VALUES
 
 INSERT INTO driver_ratings (booking_id, patient_id, driver_id, rating, comment)
 VALUES
-(1,  1,  1, 5, 'Ronald arrived very quickly and was calm throughout. Excellent driver.'),
+(1,  1,  1, 5, 'Godfrey arrived very quickly and was calm throughout. Excellent driver.'),
 (2,  2,  2, 4, 'Ivan was professional. The vehicle was clean and well-equipped.'),
 (3,  3,  4, 4, 'Agnes was polite and got me there on time. Thank you!'),
-(4,  4,  1, 5, 'Rapid response. Ronald reassured the whole team. Top marks.'),
+(4,  4,  1, 5, 'Rapid response. Godfrey reassured the whole team. Top marks.'),
 (5,  6,  2, 5, 'Highway drive was scary but Ivan handled it perfectly. Lives saved.'),
 (11, 7,  2, 4, 'Ivan handled the anaphylaxis situation with great care.'),
 (12, 10, 4, 3, 'Long trip, Agnes was okay but the ambulance AC stopped working midway.');
@@ -384,7 +384,7 @@ VALUES
 -- Institution rep notification
 (12,'institution_booking','in_app', 'delivered', 'Institutional Booking Done','Booking for KCCA employee has been completed successfully.',                 4,  TRUE,  NOW()-INTERVAL '8 days',     NOW()-INTERVAL '8 days'),
 -- Scheduled reminder
-(10,'scheduled_reminder','fcm',    'delivered', 'Upcoming Scheduled Ride',   'Reminder: Your ambulance transport is scheduled for May 12. Driver: Ronald Mukasa.', 10, FALSE, NULL, NOW()-INTERVAL '1 hour');
+(10,'scheduled_reminder','fcm',    'delivered', 'Upcoming Scheduled Ride',   'Reminder: Your ambulance transport is scheduled for May 12. Driver: Godfrey Ssali.', 10, FALSE, NULL, NOW() - INTERVAL '1 hour');
 
 
 -- ============================================================
