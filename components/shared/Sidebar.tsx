@@ -16,6 +16,7 @@ interface Props {
   user: User | null
   isOpen: boolean
   onClose: () => void
+  badges?: Record<string, number>
 }
 
 const patientLinks = [
@@ -41,7 +42,7 @@ const adminLinks = [
   { href: '/admin/analytics',     icon: LayoutDashboard, label: 'Analytics'   },
 ]
 
-export default function Sidebar({ user, isOpen, onClose }: Props) {
+export default function Sidebar({ user, isOpen, onClose, badges = {} }: Props) {
   const pathname = usePathname()
   const router   = useRouter()
 
@@ -119,7 +120,12 @@ export default function Sidebar({ user, isOpen, onClose }: Props) {
               >
                 <Icon size={17} />
                 {label}
-                {active && <ChevronRight size={13} className="ml-auto" />}
+                {badges[href] > 0 && (
+                  <span className="ml-auto bg-red-600 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+                    {badges[href] > 9 ? '9+' : badges[href]}
+                  </span>
+                )}
+                {active && !badges[href] && <ChevronRight size={13} className="ml-auto" />}
               </Link>
             )
           })}

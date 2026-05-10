@@ -11,6 +11,7 @@ export default function AuthenticatedLayout({ children }: { children: React.Reac
   const [isOpen, setIsOpen]   = useState(false)
   const [user,   setUser]     = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const [badges, setBadges]   = useState<Record<string, number>>({})
 
   useEffect(() => {
     async function resolveUser() {
@@ -36,6 +37,28 @@ export default function AuthenticatedLayout({ children }: { children: React.Reac
     }
     resolveUser()
   }, [])
+
+  // Realtime Badges logic
+  useEffect(() => {
+    if (!user) return
+
+    async function fetchCounts() {
+      if (user?.role === 'admin') {
+        const { count } = await supabase.from('bookings').select('*', { count: 'exact', head: true }).eq('status', 'requested')
+        setBadges({ '/admin/bookings': count ?? 0 })
+      } else if (user?.role === 'driver') {
+        const { data: dr } = await supabase.from('drivers').select('id').eq('user_id', user.id).single()
+        if (dr) {
+          const { count } = await supabase.from('bookings').select('*', { count: 'exact', head: true }).eq('driver_id', dr.id).eq('status', 'assigned')
+          setBadges({ '/driver': count ?? 0 })
+        }
+      }
+    }
+
+    fetchCounts()
+    const sub = supabase.channel('sidebar-badges').on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, fetchCounts).subscribe()
+    return () => { supabase.removeChannel(sub) }
+  }, [user])
 
   useEffect(() => {
     if (user && !loading) {
@@ -79,7 +102,7 @@ export default function AuthenticatedLayout({ children }: { children: React.Reac
   return (
     <div className="flex flex-col md:flex-row h-screen bg-gray-50 overflow-hidden">
       <MobileHeader isOpen={isOpen} setIsOpen={setIsOpen} />
-      <Sidebar user={user} isOpen={isOpen} onClose={() => setIsOpen(false)} />
+      <Sidebar user={user} isOpen={isOpen} onClose={() => setIsOpen(false)} badges={badges} />
       
       <main className="flex-1 flex flex-col overflow-hidden relative">
         {children}
