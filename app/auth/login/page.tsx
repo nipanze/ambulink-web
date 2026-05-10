@@ -25,16 +25,41 @@ function LoginForm() {
       if (error) throw error
 
       // Get role for redirect
-      const res = await fetch('/api/users/me', {
-        headers: { 'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}` }
+      const sesh = (await supabase.auth.getSession()).data.session
+      let res = await fetch('/api/users/me', {
+        headers: { 'Authorization': `Bearer ${sesh?.access_token}` }
       })
-      const dbUser = await res.json()
+      
+      let dbUser: any = null
+      if (res.status === 404 && email.endsWith('@ambulink.ug')) {
+         // Auto-provision admin
+         const createRes = await fetch('/api/auth/register', {
+           method: 'POST',
+           headers: { 'Content-Type': 'application/json' },
+           body: JSON.stringify({
+             email,
+             first_name: authUser?.user_metadata?.first_name || 'Admin',
+             last_name:  authUser?.user_metadata?.last_name || 'Staff',
+             phone:      authUser?.user_metadata?.phone || '+256000000000',
+             role:       'admin',
+             auth_id:    authUser?.id
+           })
+         })
+         if (createRes.ok) {
+           const created = await createRes.json()
+           dbUser = created.user
+         }
+      } else if (res.ok) {
+        dbUser = await res.json()
+      }
+
+      if (!dbUser) throw new Error('Profile synchronization error. Please check your account status.')
       
       let finalRedirect = redirect
       if (redirect === '/dashboard' || !searchParams.has('redirect')) {
         if (dbUser.role === 'admin') finalRedirect = '/admin'
-        else if (dbUser.role === 'driver') finalRedirect = '/driver' // assuming driver exists
-        else if (dbUser.role === 'institution_rep') finalRedirect = '/institution'
+        else if (dbUser.role === 'driver') finalRedirect = '/driver'
+        else if (dbUser.role === 'institution_rep') finalRedirect = '/admin'
       }
 
       toast.success('Welcome back!')
