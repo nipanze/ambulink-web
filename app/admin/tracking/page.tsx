@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
-import { Loader2, Ambulance, MapPin, Navigation, Info } from 'lucide-react'
+import { Loader2, Ambulance, MapPin, Navigation, Info, Map as MapIcon, ExternalLink } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { StatusBadge } from '@/components/shared/Badges'
 import Link from 'next/link'
@@ -36,9 +36,13 @@ export default function AdminTrackingPage() {
   }, [])
 
   // Map Init
+  const [mapKeyMissing, setMapKeyMissing] = useState(false)
   useEffect(() => {
     const key = process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY
-    if (!key || !mapRef.current) return
+    if (!key || key.startsWith('YOUR_')) {
+      setMapKeyMissing(true)
+      return
+    }
 
     const initMap = () => {
       if (!mapRef.current || mapObj.current) return
@@ -65,11 +69,9 @@ export default function AdminTrackingPage() {
   useEffect(() => {
     if (!mapObj.current || !window.google) return
 
-    // Clear old markers
     markers.current.forEach(m => m.setMap(null))
     markers.current.clear()
 
-    // Add Driver Markers
     drivers.forEach(d => {
       if (!d.location) return
       const m = new window.google.maps.Marker({
@@ -81,7 +83,6 @@ export default function AdminTrackingPage() {
       markers.current.set(`driver-${d.id}`, m)
     })
 
-    // Add Booking Markers (Active)
     bookings.forEach(b => {
       if (!b.pickup_latitude) return
       const m = new window.google.maps.Marker({
@@ -92,7 +93,6 @@ export default function AdminTrackingPage() {
       })
       markers.current.set(`booking-${b.booking_id}`, m)
     })
-
   }, [drivers, bookings])
 
   return (
@@ -105,18 +105,31 @@ export default function AdminTrackingPage() {
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5 px-3 py-1.5 bg-green-50 rounded-full border border-green-100">
             <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-            <span className="text-xs font-bold text-green-700">{drivers.length} Drivers Online</span>
+            <span className="text-xs font-bold text-green-700">{drivers.length} Online</span>
           </div>
           <div className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 rounded-full border border-red-100">
             <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-            <span className="text-xs font-bold text-red-700">{bookings.length} Active Trips</span>
+            <span className="text-xs font-bold text-red-700">{bookings.length} Active</span>
           </div>
         </div>
       </div>
 
       <div className="flex-1 flex flex-col md:flex-row relative overflow-hidden">
         {/* Map Area */}
-        <div ref={mapRef} className="flex-1 bg-gray-100" />
+        <div className="flex-1 relative bg-gray-100">
+          {mapKeyMissing ? (
+            <div className="absolute inset-0 flex flex-col items-center justify-center p-10 text-center bg-gray-50">
+              <MapIcon size={48} className="text-gray-300 mb-4" />
+              <h2 className="text-lg font-bold text-gray-700">Fleet Map Unavailable</h2>
+              <p className="text-sm text-gray-500 max-w-sm mt-2">
+                Google Maps API key is required to render the live interactive fleet map. 
+                You can still view the live list of emergencies in the sidebar.
+              </p>
+            </div>
+          ) : (
+            <div ref={mapRef} className="h-full w-full" />
+          )}
+        </div>
 
         {/* Sidebar info */}
         <div className="w-full md:w-80 bg-white border-l border-gray-100 overflow-y-auto p-4 space-y-6 shadow-2xl z-20">
@@ -134,9 +147,11 @@ export default function AdminTrackingPage() {
                     <p className="font-bold text-sm text-gray-900 truncate">{d.user?.first_name} {d.user?.last_name}</p>
                     <p className="text-[10px] font-bold text-blue-600 uppercase tracking-tighter">{d.vehicle_plate} · {d.vehicle_model}</p>
                   </div>
-                  <button className="p-2 text-gray-300 hover:text-red-600 transition-colors" onClick={() => mapObj.current?.panTo({lat: Number(d.location.latitude), lng: Number(d.location.longitude)})}>
-                    <MapPin size={16} />
-                  </button>
+                  {!mapKeyMissing && (
+                    <button className="p-2 text-gray-300 hover:text-red-600 transition-colors" onClick={() => mapObj.current?.panTo({lat: Number(d.location.latitude), lng: Number(d.location.longitude)})}>
+                      <MapPin size={16} />
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
@@ -157,13 +172,10 @@ export default function AdminTrackingPage() {
                   <span className="truncate">{b.pickup_address}</span>
                 </div>
                 <div className="mt-3 flex items-center justify-between">
-                   {b.driver_name && (
-                    <div className="flex items-center gap-1.5">
-                      <Ambulance size={12} className="text-blue-500" />
-                      <span className="text-[10px] font-bold text-gray-700">{b.driver_name}</span>
-                    </div>
-                  )}
-                  <Link href={`/track?booking=${b.booking_id}`} className="text-[10px] font-black text-red-600 uppercase tracking-widest hover:underline flex items-center gap-1 ml-auto">
+                  <a href={`https://www.google.com/maps/dir/?api=1&destination=${b.pickup_latitude},${b.pickup_longitude}`} target="_blank" className="text-[10px] font-black text-red-600 uppercase tracking-widest hover:underline flex items-center gap-1">
+                    Route <ExternalLink size={10} />
+                  </a>
+                  <Link href={`/track?booking=${b.booking_id}`} className="text-[10px] font-black text-gray-400 uppercase tracking-widest hover:underline flex items-center gap-1">
                     Details <Info size={10} />
                   </Link>
                 </div>

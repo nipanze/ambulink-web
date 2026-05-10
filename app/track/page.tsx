@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef, useCallback, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { Loader2, Phone, MapPin, Clock, Navigation, Ambulance, User, ShieldCheck } from 'lucide-react'
+import { Loader2, Phone, MapPin, Clock, Navigation, Ambulance, User, ShieldCheck, Map as MapIcon, ExternalLink } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { StatusBadge } from '@/components/shared/Badges'
 import { timeAgo } from '@/lib/utils'
@@ -109,10 +109,14 @@ function TrackingContent() {
     }
   }, [booking?.driver_id])
 
-  // Map initialization
+  // Map initialization & Key Check fallback
+  const [mapKeyMissing, setMapKeyMissing] = useState(false)
   useEffect(() => {
     const key = process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY
-    if (!key || !mapRef.current) return
+    if (!key || key.startsWith('YOUR_')) {
+      setMapKeyMissing(true)
+      return
+    }
 
     const initMap = () => {
       if (!mapRef.current || mapObj.current) return
@@ -142,7 +146,7 @@ function TrackingContent() {
     } else {
       initMap()
     }
-  }, [])
+  }, [booking])
 
   // Update Markers (Patient & Ambulance)
   useEffect(() => {
@@ -174,12 +178,11 @@ function TrackingContent() {
         ambulanceMarker.current.setPosition(driverLoc)
       }
 
-      // Auto-pan to ambulance if en route
-      if (['assigned', 'en_route', 'at_scene', 'transporting'].includes(booking.status)) {
+      const statusWithPan = ['assigned', 'en_route', 'at_scene', 'transporting']
+      if (statusWithPan.includes(booking.status)) {
         mapObj.current.panTo(driverLoc)
       }
     } else {
-        // Fallback to patient if no driver yet
         mapObj.current.panTo(patientPos)
     }
   }, [booking, driverLoc])
@@ -188,7 +191,7 @@ function TrackingContent() {
   const currentStep = booking ? statusSteps.indexOf(booking.status) : -1
 
   if (loading) return (
-    <div className="flex-1 flex items-center justify-center bg-gray-50 h-full">
+    <div className="flex-1 flex items-center justify-center bg-gray-50 h-screen">
       <div className="flex flex-col items-center gap-3">
         <Loader2 size={32} className="animate-spin text-red-600" />
         <p className="text-sm font-medium text-gray-500">Connecting to tracking server…</p>
@@ -197,7 +200,7 @@ function TrackingContent() {
   )
 
   if (!booking) return (
-    <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-gray-50 h-full">
+    <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-gray-50 h-screen">
       <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-6">
         <MapPin size={40} className="text-gray-300" />
       </div>
@@ -209,16 +212,36 @@ function TrackingContent() {
     </div>
   )
 
+  const gmapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${booking.pickup_latitude},${booking.pickup_longitude}`
+
   return (
-    <div className="flex-1 flex flex-col overflow-hidden relative h-full">
-      <div ref={mapRef} className="h-[50%] md:h-[60%] bg-gray-200 z-0">
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          {typeof window !== 'undefined' && !window.google && (
-            <div className="bg-white/90 backdrop-blur px-4 py-2 rounded-lg shadow-sm border border-gray-100 text-xs text-gray-500">
-              Initializing Map Engine…
+    <div className="flex-1 flex flex-col overflow-hidden relative h-screen bg-white">
+      {/* Map or Fallback Area */}
+      <div className="h-[45%] md:h-[55%] relative overflow-hidden bg-gray-100">
+        {mapKeyMissing ? (
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-red-50/30 p-6 text-center">
+            <div className="w-16 h-16 bg-white rounded-full shadow-md flex items-center justify-center mb-4 text-red-600">
+               <MapIcon size={32} />
             </div>
-          )}
-        </div>
+            <h3 className="text-lg font-black text-gray-900 leading-tight">Interactive Map Unavailable</h3>
+            <p className="text-sm text-gray-500 mt-2 max-w-xs mx-auto mb-6">
+              Google Maps API is not configured. You can still track via live status updates below or open external maps.
+            </p>
+            <a href={gmapsUrl} target="_blank" className="btn-primary flex items-center gap-2 px-6">
+               <ExternalLink size={16} /> Open External Google Maps
+            </a>
+          </div>
+        ) : (
+          <div ref={mapRef} className="h-full w-full z-0">
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              {typeof window !== 'undefined' && !window.google && (
+                <div className="bg-white/90 backdrop-blur px-4 py-2 rounded-lg shadow-sm border border-gray-100 text-xs text-gray-500">
+                  Initializing Map Engine…
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         <div className="absolute top-4 left-4 right-4 flex justify-between items-start pointer-events-none z-10">
           <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-3 flex items-center gap-3 pointer-events-auto">
@@ -233,13 +256,6 @@ function TrackingContent() {
               </div>
             </div>
           </div>
-
-          {['en_route','assigned'].includes(booking.status) && (
-            <div className="bg-red-600 text-white rounded-2xl p-3 shadow-xl pointer-events-auto text-right">
-              <p className="text-[10px] font-bold opacity-80 uppercase tracking-widest">ETA</p>
-              <p className="text-2xl font-black tracking-tighter leading-tight">7 MIN</p>
-            </div>
-          )}
         </div>
       </div>
 
@@ -262,38 +278,9 @@ function TrackingContent() {
                 `}>
                   {i < currentStep ? '✓' : i + 1}
                 </div>
-                <span className={`text-[9px] font-bold uppercase tracking-wider hidden sm:block
-                  ${i === currentStep ? 'text-gray-900' : 'text-gray-400'}
-                `}>
-                  {step.split('_')[0]}
-                </span>
               </div>
             ))}
           </div>
-
-          {booking.driver && (
-            <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl border border-gray-100">
-              <div className="relative">
-                <div className="w-14 h-14 rounded-2xl bg-blue-100 flex items-center justify-center text-blue-600">
-                  <Navigation size={28} />
-                </div>
-                <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-lg bg-green-500 border-2 border-white flex items-center justify-center text-white">
-                  <Ambulance size={12} />
-                </div>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Ambulance Team</p>
-                <p className="font-black text-gray-900 text-lg leading-tight truncate">{(booking.driver as any).user?.first_name} {(booking.driver as any).user?.last_name}</p>
-                <p className="text-sm font-bold text-blue-600 mt-0.5">
-                  {(booking.driver as any).vehicle_plate} · {(booking.driver as any).vehicle_model}
-                </p>
-              </div>
-              <a href={`tel:${(booking.driver as any).user?.phone}`} 
-                 className="w-12 h-12 bg-white border border-gray-200 rounded-2xl flex items-center justify-center text-gray-900 hover:bg-red-600 hover:border-red-600 hover:text-white transition-all shadow-sm active:scale-95">
-                <Phone size={20} />
-              </a>
-            </div>
-          )}
 
           <div className="space-y-6">
             <div className="flex gap-4">
@@ -305,21 +292,41 @@ function TrackingContent() {
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5">Pickup Location</p>
                 <p className="text-gray-900 font-bold leading-tight truncate">{booking.pickup_address || 'Current GPS Location'}</p>
                 {booking.pickup_landmark && <p className="text-xs text-gray-500 mt-1">Ref: {booking.pickup_landmark}</p>}
+                <p className="text-[10px] text-gray-400 mt-1">Lat: {booking.pickup_latitude}, Lng: {booking.pickup_longitude}</p>
               </div>
             </div>
 
-            {booking.destination_name && (
-              <div className="flex gap-4">
-                <div className="flex flex-col items-center">
-                  <div className="w-3 h-3 rounded-full bg-red-600 flex-shrink-0" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5">Destination</p>
-                  <p className="text-gray-900 font-bold leading-tight truncate">{booking.destination_name}</p>
-                </div>
-              </div>
-            )}
+            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100">
+               <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center text-blue-600">
+                    <Navigation size={22} />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Navigation</p>
+                    <p className="text-sm font-bold text-gray-900">Direct Link Available</p>
+                  </div>
+               </div>
+               <a href={gmapsUrl} target="_blank" className="btn-primary text-xs py-2 px-4 shadow-md shadow-red-100">NAVIGATE NOW</a>
+            </div>
           </div>
+
+          {booking.driver && (
+            <div className="flex items-center gap-4 p-4 bg-red-50/50 rounded-2xl border border-red-100">
+              <div className="w-14 h-14 rounded-2xl bg-white flex items-center justify-center text-red-600 shadow-sm">
+                <Ambulance size={28} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Ambulance Team</p>
+                <p className="font-black text-gray-900 text-lg leading-tight truncate">{(booking.driver as any).user?.first_name} {(booking.driver as any).user?.last_name}</p>
+                <p className="text-sm font-bold text-red-600 mt-0.5">
+                  {(booking.driver as any).vehicle_plate} · {(booking.driver as any).vehicle_model}
+                </p>
+              </div>
+              <a href={`tel:${(booking.driver as any).user?.phone}`} className="w-12 h-12 bg-white border border-gray-200 rounded-2xl flex items-center justify-center text-gray-900 shadow-sm">
+                 <Phone size={20} />
+              </a>
+            </div>
+          )}
 
           <div className="pt-6 border-t border-gray-50 flex items-center justify-between text-[10px] font-bold text-gray-400 uppercase tracking-wider">
             <div className="flex items-center gap-1.5">
@@ -339,14 +346,7 @@ function TrackingContent() {
 
 export default function TrackPage() {
   return (
-    <Suspense fallback={
-      <div className="flex-1 flex items-center justify-center bg-gray-50 h-screen">
-        <div className="flex flex-col items-center gap-3">
-          <Loader2 size={32} className="animate-spin text-red-600" />
-          <p className="text-sm font-medium text-gray-500">Loading Tracking Engine…</p>
-        </div>
-      </div>
-    }>
+    <Suspense fallback={<div className="flex items-center justify-center h-screen bg-gray-50"><Loader2 className="animate-spin text-red-600" /></div>}>
       <TrackingContent />
     </Suspense>
   )
