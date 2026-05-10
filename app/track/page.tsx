@@ -20,7 +20,7 @@ const Popup = dynamic(() => import('react-leaflet').then(m => m.Popup), { ssr: f
 const MapEvents = null;
 
 // Helper for Routing (Client-side only)
-function RoutingMachine({ driverLoc, patientLoc, onUpdate }: { driverLoc: any, patientLoc: any, onUpdate: (dist: string, time: string) => void }) {
+function RoutingMachine({ driverLoc, patientLoc, onUpdate }: { driverLoc: any, patientLoc: any, onUpdate: (dist: string, time: string, secs: number) => void }) {
   const map: any = require('react-leaflet').useMap();
   const routingControlRef = useRef<any>(null);
 
@@ -54,7 +54,8 @@ function RoutingMachine({ driverLoc, patientLoc, onUpdate }: { driverLoc: any, p
         const summary = routes[0].summary;
         const dist = (summary.totalDistance / 1000).toFixed(1) + ' km';
         const time = Math.round(summary.totalTime / 60) + ' min';
-        onUpdate(dist, time);
+        const totalSecs = Math.round(summary.totalTime);
+        onUpdate(dist, time, totalSecs);
     })
     .addTo(map);
 
@@ -75,7 +76,23 @@ function TrackingContent() {
   const [driverLoc, setDriverLoc] = useState<{lat: number, lng: number} | null>(null)
   const [eta, setEta] = useState<string | null>(null)
   const [distance, setDistance] = useState<string | null>(null)
+  const [countdown, setCountdown] = useState<number | null>(null) // seconds
   const [L, setL] = useState<any>(null)
+
+  // Countdown Ticker
+  useEffect(() => {
+    if (countdown === null || countdown <= 0) return
+    const timer = setInterval(() => {
+      setCountdown(prev => (prev && prev > 0) ? prev - 1 : 0)
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [countdown])
+
+  const formatCountdown = (totalSeconds: number) => {
+    const mins = Math.floor(totalSeconds / 60)
+    const secs = totalSeconds % 60
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+  }
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -191,16 +208,17 @@ function TrackingContent() {
             {driverLoc && <RoutingMachine 
                 driverLoc={driverLoc} 
                 patientLoc={patientLoc} 
-                onUpdate={(dist, time) => {
+                onUpdate={(dist, time, secs) => {
                     setDistance(dist)
                     setEta(time)
+                    setCountdown(secs)
                 }} 
             />}
           </MapContainer>
         )}
 
         <div className="absolute top-4 left-4 right-4 flex justify-between items-start pointer-events-none z-[100]">
-          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-3 flex items-center gap-3 pointer-events-auto">
+          <div className="bg-white/90 backdrop-blur-md rounded-2xl shadow-xl border border-gray-100 p-3 flex items-center gap-3 pointer-events-auto">
             <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center text-red-600">
               <Ambulance size={22} />
             </div>
@@ -213,10 +231,13 @@ function TrackingContent() {
             </div>
           </div>
 
-          {eta && (
-            <div className="bg-red-600 text-white rounded-2xl shadow-xl px-4 py-3 flex flex-col items-center justify-center pointer-events-auto border-2 border-white animate-pulse-slow">
-              <span className="text-[10px] font-black uppercase tracking-widest opacity-80 leading-none mb-1">Ambulance Arriving</span>
-              <span className="text-xl font-black leading-none">{eta} ({distance})</span>
+          {countdown !== null && (
+            <div className="bg-red-600 text-white rounded-2xl shadow-2xl px-5 py-4 flex flex-col items-center justify-center pointer-events-auto border-4 border-white animate-pulse-slow">
+              <span className="text-[10px] font-black uppercase tracking-widest opacity-80 leading-none mb-2">Patient Contact In</span>
+              <span className="text-3xl font-mono font-black leading-none tracking-tighter">
+                {formatCountdown(countdown)}
+              </span>
+              <span className="text-[10px] font-bold mt-1 opacity-70">({distance})</span>
             </div>
           )}
         </div>

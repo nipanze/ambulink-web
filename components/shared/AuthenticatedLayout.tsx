@@ -1,11 +1,13 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import Image from 'next/image'
 import { Loader2 } from 'lucide-react'
 import Sidebar from './Sidebar'
 import MobileHeader from './MobileHeader'
 import type { User } from '@/lib/types'
+import { toast } from 'sonner'
+import Link from 'next/link'
 
 export default function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
   const [isOpen, setIsOpen]   = useState(false)
@@ -38,34 +40,59 @@ export default function AuthenticatedLayout({ children }: { children: React.Reac
     resolveUser()
   }, [])
 
-  // Realtime Badges logic
-  useEffect(() => {
+  const fetchCounts = useCallback(async () => {
     if (!user) return
-
-    async function fetchCounts() {
-      if (user?.role === 'admin') {
-        const { count } = await supabase.from('bookings').select('*', { count: 'exact', head: true }).eq('status', 'requested')
-        setBadges({ 'notifications': count ?? 0 })
-      } else if (user?.role === 'driver') {
-        const { data: dr } = await supabase.from('drivers').select('id').eq('user_id', user.id).single()
-        if (dr) {
-          const { count } = await supabase.from('bookings').select('*', { count: 'exact', head: true }).eq('driver_id', dr.id).eq('status', 'assigned')
-          setBadges({ 'notifications': count ?? 0 })
-        }
-      } else if (user?.role === 'patient') {
-        const { count } = await supabase.from('bookings').select('*', { count: 'exact', head: true }).eq('patient_id', user.id).in('status', ['assigned','en_route','at_scene','transporting'])
+    if (user?.role === 'admin') {
+      const { count } = await supabase.from('bookings').select('*', { count: 'exact', head: true }).eq('status', 'requested')
+      setBadges({ 'notifications': count ?? 0 })
+    } else if (user?.role === 'driver') {
+      const { data: dr } = await supabase.from('drivers').select('id').eq('user_id', user.id).single()
+      if (dr) {
+        const { count } = await supabase.from('bookings').select('*', { count: 'exact', head: true }).eq('driver_id', dr.id).eq('status', 'assigned')
         setBadges({ 'notifications': count ?? 0 })
       }
+    } else if (user?.role === 'patient') {
+      const { count } = await supabase.from('bookings').select('*', { count: 'exact', head: true }).eq('patient_id', user.id).in('status', ['assigned','en_route','at_scene','transporting'])
+      setBadges({ 'notifications': count ?? 0 })
     }
-
-    fetchCounts()
-    const sub = supabase.channel('sidebar-badges').on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, fetchCounts).subscribe()
-    return () => { supabase.removeChannel(sub) }
   }, [user])
 
   useEffect(() => {
+    if (!user) return
+    fetchCounts()
+    
+    // Global SOS Alerts for Admins
+    const channel = supabase.channel('emergency-alerts')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'bookings' }, async (payload) => {
+        const newBooking = payload.new as any
+        
+        if (user.role === 'admin' && newBooking.status === 'requested') {
+          // 1. Play Emergency Sound
+          try {
+            const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3')
+            audio.volume = 0.5
+            audio.play()
+          } catch (e) { /* Audio play might be blocked by browser */ }
+
+          // 2. Show Toast
+          toast.error('🚨 NEW EMERGENCY SOS!', {
+            description: 'A new emergency request requires your immediate attention.',
+            duration: 8000,
+            action: {
+              label: 'DISPATCH',
+              onClick: () => window.location.href = '/admin/bookings'
+            }
+          })
+        }
+        fetchCounts()
+      })
+      .subscribe()
+    
+    return () => { supabase.removeChannel(channel) }
+  }, [user, fetchCounts])
+
+  useEffect(() => {
     if (user && !loading) {
-       // Force role-based redirection
         const path = window.location.pathname
         const isCommonPath = path.startsWith('/settings') || path.startsWith('/notifications')
         
@@ -91,10 +118,7 @@ export default function AuthenticatedLayout({ children }: { children: React.Reac
       <div className="h-screen w-full flex items-center justify-center bg-red-50 flex-col p-6 text-center">
         <Image src="/images/icon.png" alt="Logo" width={64} height={64} className="mb-6" />
         <h2 className="text-xl font-black text-gray-900">Profile Synchronization Error</h2>
-        <p className="text-sm text-gray-500 max-w-xs mt-2">
-          Your auth session is active but we couldn't find your AmbuLink profile. 
-          Please sign out and sign in again.
-        </p>
+        <p className="text-sm text-gray-500 max-w-xs mt-2">Sign out and sign in again.</p>
         <button onClick={() => supabase.auth.signOut().then(() => window.location.href = '/auth/login')} className="mt-6 btn-primary px-8">
            Return to Login
         </button>
@@ -106,7 +130,6 @@ export default function AuthenticatedLayout({ children }: { children: React.Reac
     <div className="flex flex-col md:flex-row h-screen bg-gray-50 overflow-hidden">
       <MobileHeader isOpen={isOpen} setIsOpen={setIsOpen} />
       <Sidebar user={user} isOpen={isOpen} onClose={() => setIsOpen(false)} badges={badges} />
-      
       <main className="flex-1 flex flex-col overflow-hidden relative">
         {children}
       </main>
