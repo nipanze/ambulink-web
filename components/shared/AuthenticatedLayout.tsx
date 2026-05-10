@@ -45,13 +45,16 @@ export default function AuthenticatedLayout({ children }: { children: React.Reac
     async function fetchCounts() {
       if (user?.role === 'admin') {
         const { count } = await supabase.from('bookings').select('*', { count: 'exact', head: true }).eq('status', 'requested')
-        setBadges({ '/admin/bookings': count ?? 0 })
+        setBadges({ 'notifications': count ?? 0 })
       } else if (user?.role === 'driver') {
         const { data: dr } = await supabase.from('drivers').select('id').eq('user_id', user.id).single()
         if (dr) {
           const { count } = await supabase.from('bookings').select('*', { count: 'exact', head: true }).eq('driver_id', dr.id).eq('status', 'assigned')
-          setBadges({ '/driver': count ?? 0 })
+          setBadges({ 'notifications': count ?? 0 })
         }
+      } else if (user?.role === 'patient') {
+        const { count } = await supabase.from('bookings').select('*', { count: 'exact', head: true }).eq('patient_id', user.id).in('status', ['assigned','en_route','at_scene','transporting'])
+        setBadges({ 'notifications': count ?? 0 })
       }
     }
 

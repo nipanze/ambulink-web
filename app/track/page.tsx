@@ -17,6 +17,7 @@ function TrackingContent() {
   const [booking, setBooking] = useState<Booking | null>(null)
   const [loading, setLoading] = useState(true)
   const [driverLoc, setDriverLoc] = useState<{lat: number, lng: number} | null>(null)
+  const [eta, setEta] = useState<string | null>(null)
 
   const mapRef = useRef<HTMLDivElement>(null)
   const mapObj = useRef<any>(null)
@@ -181,6 +182,20 @@ function TrackingContent() {
       const statusWithPan = ['assigned', 'en_route', 'at_scene', 'transporting']
       if (statusWithPan.includes(booking.status)) {
         mapObj.current.panTo(driverLoc)
+        
+        // Calculate ETA
+        if (window.google) {
+          const service = new window.google.maps.DistanceMatrixService()
+          service.getDistanceMatrix({
+            origins: [driverLoc],
+            destinations: [{ lat: Number(booking.pickup_latitude), lng: Number(booking.pickup_longitude) }],
+            travelMode: 'DRIVING'
+          }, (response: any, status: string) => {
+            if (status === 'OK' && response.rows[0].elements[0].duration) {
+              setEta(response.rows[0].elements[0].duration.text)
+            }
+          })
+        }
       }
     } else {
         mapObj.current.panTo(patientPos)
@@ -256,6 +271,13 @@ function TrackingContent() {
               </div>
             </div>
           </div>
+
+          {eta && (
+            <div className="bg-red-600 text-white rounded-2xl shadow-xl px-4 py-3 flex flex-col items-center justify-center pointer-events-auto border-2 border-white animate-in slide-in-from-right duration-500">
+              <span className="text-[10px] font-black uppercase tracking-widest opacity-80 leading-none mb-1">Arriving In</span>
+              <span className="text-xl font-black leading-none">{eta}</span>
+            </div>
+          )}
         </div>
       </div>
 

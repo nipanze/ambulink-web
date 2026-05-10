@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { Loader2, Search, RefreshCw, MapPin, Clock } from 'lucide-react'
+import { Loader2, Search, RefreshCw, MapPin, Clock, X, ChevronRight } from 'lucide-react'
+import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
 import { StatusBadge, TypeBadge, PriorityBadge } from '@/components/shared/Badges'
 import { timeAgo, formatUGX } from '@/lib/utils'
@@ -11,6 +12,8 @@ export default function AdminBookingsPage() {
   const [loading,  setLoading]  = useState(true)
   const [search,   setSearch]   = useState('')
   const [status,   setStatus]   = useState<BookingStatus | 'all'>('all')
+  const [assigning, setAssigning] = useState<number | null>(null)
+  const [onlineDrivers, setOnlineDrivers] = useState<any[]>([])
 
   async function load() {
     setLoading(true)
@@ -37,6 +40,32 @@ export default function AdminBookingsPage() {
     (b.driver_name ?? '').toLowerCase().includes(search.toLowerCase()) ||
     (b.pickup_address ?? '').toLowerCase().includes(search.toLowerCase())
   )
+
+  async function openAssign(bookingId: number) {
+    setAssigning(bookingId)
+    const { data } = await supabase.from('vw_online_drivers').select('*')
+    setOnlineDrivers(data ?? [])
+  }
+
+  async function confirmAssign(driverId: number) {
+    if (!assigning) return
+    const { error } = await supabase
+      .from('bookings')
+      .update({ 
+        driver_id: driverId, 
+        status: 'assigned',
+        assigned_at: new Date().toISOString()
+      })
+      .eq('id', assigning)
+    
+    if (error) {
+      toast.error('Assignment failed: ' + error.message)
+    } else {
+      toast.success('Driver assigned successfully')
+      setAssigning(null)
+      load()
+    }
+  }
 
   const ALL: (BookingStatus | 'all')[] = ['all','requested','assigned','en_route','at_scene','transporting','completed','cancelled']
 
@@ -96,6 +125,13 @@ export default function AdminBookingsPage() {
                       <td className="px-3 py-3 font-mono text-xs text-gray-500">{b.vehicle_plate || '—'}</td>
                       <td className="px-3 py-3 text-gray-700 whitespace-nowrap">{formatUGX(b.fare_amount)}</td>
                       <td className="px-3 py-3 text-gray-400 whitespace-nowrap text-xs">{timeAgo(b.created_at)}</td>
+                      <td className="px-3 py-3 text-right">
+                        {b.status === 'requested' && (
+                          <button onClick={() => openAssign(b.booking_id)} className="btn-primary text-[10px] py-1 px-2 whitespace-nowrap">
+                            Assign Driver
+                          </button>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -139,15 +175,51 @@ export default function AdminBookingsPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-end text-[10px] text-gray-400">
-                    {timeAgo(b.created_at)}
+                    {b.status === 'requested' && (
+                      <button onClick={() => openAssign(b.booking_id)} className="btn-primary text-[10px] py-1 w-full mt-2">
+                        Assign Driver
+                      </button>
+                    )}
+                    <span className="mt-2 text-right w-full text-[10px] text-gray-400 block">{timeAgo(b.created_at)}</span>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+
+      {assigning && (
+        <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="p-5 border-b border-gray-100 flex items-center justify-between">
+              <h2 className="text-sm font-black uppercase tracking-widest text-gray-400">Select Dispatch Driver</h2>
+              <button onClick={() => setAssigning(null)} className="p-1 hover:bg-gray-100 rounded-full"><X size={20} /></button>
             </div>
-          </>
-        )}
-      </div>
+            <div className="max-h-[400px] overflow-y-auto p-2 space-y-1">
+              {onlineDrivers.length === 0 ? (
+                <div className="p-8 text-center text-gray-400 text-xs italic">No online drivers available for dispatch.</div>
+              ) : (
+                onlineDrivers.map(d => (
+                  <button key={d.driver_id} onClick={() => confirmAssign(d.driver_id)}
+                    className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-red-50 text-left transition-all group">
+                    <div className="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center text-red-600 font-black">
+                      {d.driver_name[0]}
+                    </div>
+                    <div>
+                      <p className="font-bold text-sm text-gray-900 line-clamp-1">{d.driver_name}</p>
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">{d.vehicle_plate} · {d.vehicle_type}</p>
+                    </div>
+                    <ChevronRight size={16} className="ml-auto text-gray-200 group-hover:text-red-300" />
+                  </button>
+                ))
+              )}
+            </div>
+            <div className="p-4 bg-gray-50 text-[10px] text-gray-400 text-center">
+              Only active, online drivers are shown.
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -120,12 +120,7 @@ export default function Sidebar({ user, isOpen, onClose, badges = {} }: Props) {
               >
                 <Icon size={17} />
                 {label}
-                {badges[href] > 0 && (
-                  <span className="ml-auto bg-red-600 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
-                    {badges[href] > 9 ? '9+' : badges[href]}
-                  </span>
-                )}
-                {active && !badges[href] && <ChevronRight size={13} className="ml-auto" />}
+                {active && <ChevronRight size={13} className="ml-auto" />}
               </Link>
             )
           })}
@@ -133,8 +128,14 @@ export default function Sidebar({ user, isOpen, onClose, badges = {} }: Props) {
 
         {/* Bottom actions */}
         <div className="px-3 py-4 border-t border-gray-100 space-y-1">
-          <Link href="/notifications" onClick={onClose} className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-900">
-            <Bell size={17} /> Notifications
+          <Link href="/notifications" onClick={onClose} className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-900 group relative">
+            <Bell size={17} /> 
+            Notifications
+            {badges['notifications'] > 0 && (
+              <span className="ml-auto bg-red-600 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full min-w-[18px] text-center shadow-sm">
+                {badges['notifications'] > 9 ? '9+' : badges['notifications']}
+              </span>
+            )}
           </Link>
           <Link href="/settings" onClick={onClose} className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-900">
             <Settings size={17} /> Settings
