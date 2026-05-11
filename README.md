@@ -61,7 +61,9 @@ Developed by students at **Kampala International University**, AmbuLink addresse
 
 - **One-Tap SOS Emergency Booking** — GPS-detected location, instant driver dispatch
 - **Automated Nearest-Driver Matching** — Haversine algorithm, <180ms match time
-- **Real-Time GPS Tracking** — Live ambulance location from dispatch to arrival
+- **Real-Time Leaflet & OSRM Tracking** — Live ambulance location with high-precision OSRM routing
+- **Live Velocity Simulation** — Real-time speed monitoring (KM/H) for both patient and driver
+- **"Big Hero" Countdown Clock** — Digital-style MM:SS countdown with route recalculation jitter
 - **Scheduled Bookings** — Future-date transport with admin assignment
 - **Institutional Emergency Portal** — Priority dispatch for registered organisations
 - **Highway Accident Reporting** — GPS pin-drop for road corridor incidents
@@ -84,7 +86,8 @@ Developed by students at **Kampala International University**, AmbuLink addresse
 | Real-Time | Supabase Realtime |
 | Storage | Supabase Storage |
 | Driver App | Flutter (Android) |
-| Maps | Google Maps API |
+| Maps | Leaflet.js / OpenStreetMap / CartoDB |
+| Routing | OSR&M (Open Source Routing Machine) |
 | Notifications | Firebase Cloud Messaging (FCM) |
 | Hosting | Vercel + GitHub CI/CD |
 | Version Control | Git, GitHub |
@@ -99,7 +102,6 @@ Developed by students at **Kampala International University**, AmbuLink addresse
 - npm or yarn
 - Supabase CLI
 - Flutter SDK (for driver app)
-- Google Maps API Key
 - Firebase project (for FCM)
 
 ### 1. Clone the Repository
@@ -124,7 +126,6 @@ Create a `.env.local` file in `/web`:
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-NEXT_PUBLIC_GOOGLE_MAPS_KEY=your_google_maps_api_key
 FCM_SERVER_KEY=your_firebase_server_key
 ```
 
