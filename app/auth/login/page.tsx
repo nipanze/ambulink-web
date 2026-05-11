@@ -46,7 +46,7 @@ function LoginForm() {
       router.push(finalRedirect)
     } catch (err: any) {
       const message = err.message === 'Invalid login credentials'
-        ? 'Invalid login credentials. Use the full demo email, for example driver.ssali@ambulink.ug, and make sure demo Auth users are seeded.'
+        ? 'Invalid login credentials. Please check your email and password.'
         : err.message || 'Login failed. Please check your credentials.'
       toast.error(message)
     } finally {
@@ -110,14 +110,6 @@ function LoginForm() {
             {loading ? <Loader2 size={20} className="animate-spin" /> : 'Sign In'}
           </button>
         </form>
-
-        <div className="mt-6 p-4 bg-yellow-50 rounded-xl border border-yellow-100 text-[10px] space-y-1">
-           <p className="text-yellow-800 font-bold uppercase tracking-widest">Demo Accounts:</p>
-           <p className="text-yellow-700">Admin: admin@ambulink.ug / ambulink@2026</p>
-           <p className="text-yellow-700">Driver: driver.ssali@ambulink.ug / ambulink@2026</p>
-           <p className="text-yellow-700">Driver: driver.tendo@ambulink.ug / ambulink@2026</p>
-           <p className="text-yellow-700">Patient: patient.mukisa@ambulink.ug / ambulink@2026</p>
-        </div>
 
         <p className="text-center text-sm text-gray-500 mt-8">
           Don't have an account? <Link href="/auth/register" className="text-red-600 font-bold hover:underline">Register</Link>
