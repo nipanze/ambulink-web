@@ -1,18 +1,19 @@
-# 🚑 AmbuLink
+<div align="center">
+  <img src="public/images/icon.png" alt="AmbuLink Logo" width="80" />
+  <h1>AmbuLink</h1>
+  <p><strong>Smart Ambulance Booking System — Reducing Emergency Response Time Across Uganda</strong></p>
 
-> **Smart Ambulance Booking System — Reducing Emergency Response Time Across Uganda**
-
-[![Next.js](https://img.shields.io/badge/Next.js-14-black?style=flat-square&logo=next.js)](https://nextjs.org)
-[![Flutter](https://img.shields.io/badge/Flutter-Android-blue?style=flat-square&logo=flutter)](https://flutter.dev)
-[![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-green?style=flat-square&logo=supabase)](https://supabase.com)
-[![Vercel](https://img.shields.io/badge/Deployed-Vercel-black?style=flat-square&logo=vercel)](https://vercel.com)
-[![License](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](LICENSE)
+  [![Next.js](https://img.shields.io/badge/Next.js-14-black?style=flat-square&logo=next.js)](https://nextjs.org)
+  [![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-green?style=flat-square&logo=supabase)](https://supabase.com)
+  [![Vercel](https://img.shields.io/badge/Deployed-Vercel-black?style=flat-square&logo=vercel)](https://vercel.com)
+  [![License](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](LICENSE)
+</div>
 
 ---
 
 ## 📌 Overview
 
-AmbuLink is a three-component digital emergency response platform that connects patients, institutions, highway users, and remote communities across Uganda with the nearest available registered ambulance driver — in real time.
+AmbuLink is a digital emergency response platform that connects patients, institutions, highway users, and remote communities across Uganda with the nearest available registered ambulance driver — in real time.
 
 Developed by students at **Kampala International University**, AmbuLink addresses a critical national public health gap: the complete absence of a coordinated, digital ambulance dispatch system in Uganda. Every year, hundreds of preventable deaths occur because no one could find an ambulance in time. AmbuLink exists to change that.
 
@@ -22,27 +23,127 @@ Developed by students at **Kampala International University**, AmbuLink addresse
 
 ## 📸 Screenshots
 
-### Landing Page / SOS Interface
-<!-- SCREENSHOT: System Login / Landing Page — user-facing login and SOS request interface -->
-> *Screenshot placeholder — add `/docs/screenshots/landing-page.png`*
+### Landing Page
+
+The public-facing marketing page introduces AmbuLink's value proposition — real-time tracking, sub-10-minute average response, and verified drivers. Visitors can register as a driver or institution directly from here.
+
+![Landing Page](public/screenshots/landingpage.png)
+
+![Landing Page — Features Section](public/screenshots/landingpage2.png)
 
 ---
 
-### Real-Time Ambulance Tracking Map
-<!-- SCREENSHOT: Live GPS map showing driver location en route to patient -->
-> *Screenshot placeholder — add `/docs/screenshots/tracking-map.png`*
+### Login
+
+All users (patients, drivers, and admins) sign in through a single clean login screen. Role-based routing takes each user to their dedicated dashboard after authentication.
+
+![Login](public/screenshots/login.png)
 
 ---
+
+## 🧑‍⚕️ Patient Portal
+
+### My Bookings
+
+Patients can view their full booking history across all booking types: Emergency, Scheduled, Institutional, and Highway. Each booking shows the reference number, type, status, pickup location, destination, fare, and timestamp.
+
+![Patient Bookings](public/screenshots/patient_bookings.png)
+
+---
+
+### Live Tracking
+
+Once an ambulance is dispatched, patients see a full-screen Leaflet map with the driver's live position and the OSRM-calculated route to their location. A large red countdown card shows estimated arrival time (MM:SS), live velocity in KM/H, and distance remaining.
+
+![Patient Track](public/screenshots/patient_track.png)
+
+When there is no active trip, the tracking page gracefully shows a "No Active Trip" state with a return-home prompt.
+
+![No Active Trip](public/screenshots/no_active_trip.png)
+
+---
+
+### Settings
+
+Patients can update their personal information (name, phone number), change their password, and manage notification preferences — including booking updates and promotional alerts.
+
+![Patient Settings](public/screenshots/patient_settings.png)
+
+---
+
+## 🚑 Driver Portal
+
+### Driver Dashboard — Online with Active Job
+
+When a driver goes online, the header turns green and shows their ambulance ID. The dashboard displays their rating, total trips, and driver level (Basic / Pro / Neonatal / Advanced). Active jobs appear with a live mini-map showing the patient's pickup location, the pickup address, destination, and action buttons to call the patient, open navigation, or start the en-route timer.
+
+![Driver Dashboard — Active Job](public/screenshots/driver_dashboard_withactivejob.png)
+
+---
+
+### Driver Dashboard — Job History
+
+When there are no active jobs, drivers can browse their completed trip history, each card showing the patient name, pickup address, destination, and completion status.
+
+![Driver Dashboard — History](public/screenshots/driver_shows_dashboard_and_online.png)
+
+---
+
+## 🛡️ Admin Portal
 
 ### Admin Dashboard
-<!-- SCREENSHOT: Admin Dashboard — live booking overview with driver map and analytics -->
-> *Screenshot placeholder — add `/docs/screenshots/admin-dashboard.png`*
+
+The admin command centre shows live stats at a glance: today's bookings, trips completed, total registered drivers, and institutional accounts. A red banner fires when there are unassigned emergencies awaiting dispatch, linking directly to the dispatch centre. A yellow banner highlights pending institution approvals.
+
+![Admin Dashboard](public/screenshots/admin_dashboard.png)
 
 ---
 
-### Driver Mobile App
-<!-- SCREENSHOT: Driver Home Screen — availability toggle and incoming request notification -->
-> *Screenshot placeholder — add `/docs/screenshots/driver-app-home.png`*
+### Fleet Tracking
+
+A full-screen Leaflet map displays every online ambulance as a real-time icon across the Kampala metro area. A sidebar lists all active ambulances by driver name, plate, and vehicle type. Status counters at the top show how many units are online and how many active SOS calls are in progress.
+
+![Fleet Tracking](public/screenshots/admin_fleet_tracking.png)
+
+---
+
+### All Bookings
+
+Admins can view, search, and filter every booking in the system. Each row shows the reference, booking type, status (colour-coded), patient, pickup, assigned driver, plate, fare, and time. Priority bookings are flagged with a red badge. Bookings waiting for a driver have an inline "Assign Driver" button.
+
+![All Bookings](public/screenshots/admin_all_bookings.png)
+
+---
+
+### Drivers
+
+A searchable, paginated table of all 16 registered drivers shows their plate, vehicle type, zone, trip count, star rating, account status (active / suspended), and real-time online indicator. Admins can suspend a driver with a single click.
+
+![All Drivers](public/screenshots/all_drivers.png)
+
+---
+
+### Institutions
+
+Admins manage registered institutions — hospitals, government bodies, schools, and corporates. Pending institutions are highlighted with an amber border and Approve / Reject action buttons. Active institutions show their contact details and website link.
+
+![Institutions](public/screenshots/admin_institutions_one_requesting_approval.png)
+
+---
+
+### Analytics
+
+The analytics page surfaces key performance indicators: total bookings, total revenue (UGX), completed trips, and average assignment time. Charts display daily bookings and revenue over the last 30 days, booking type distribution (Emergency, Scheduled, Highway, Institutional), average response time, and average trip distance.
+
+![Analytics](public/screenshots/admin_analytics.png)
+
+---
+
+### Notifications
+
+System-level alerts are surfaced in a dedicated notifications panel. Admins see events such as driver suspensions and unassigned emergencies waiting beyond the SLA threshold.
+
+![Notifications](public/screenshots/admin_notifications.png)
 
 ---
 
@@ -63,11 +164,10 @@ Developed by students at **Kampala International University**, AmbuLink addresse
 - **Automated Nearest-Driver Matching** — Haversine algorithm, <180ms match time
 - **Real-Time Leaflet & OSRM Tracking** — Live ambulance location with high-precision OSRM routing
 - **Live Velocity Simulation** — Real-time speed monitoring (KM/H) for both patient and driver
-- **"Big Hero" Countdown Clock** — Digital-style MM:SS countdown with route recalculation jitter
+- **"Big Hero" Countdown Clock** — Digital-style MM:SS countdown with route recalculation
 - **Scheduled Bookings** — Future-date transport with admin assignment
 - **Institutional Emergency Portal** — Priority dispatch for registered organisations
 - **Highway Accident Reporting** — GPS pin-drop for road corridor incidents
-- **Driver Mobile App (Android)** — Flutter app with FCM notifications and Google Maps navigation
 - **Admin Dashboard** — Analytics, driver management, audit logs, and reporting
 - **Role-Based Access Control** — Patients, drivers, institutional reps, and admins
 - **Push Notification System** — Firebase Cloud Messaging for all booking events
@@ -85,9 +185,8 @@ Developed by students at **Kampala International University**, AmbuLink addresse
 | Auth | Supabase Auth |
 | Real-Time | Supabase Realtime |
 | Storage | Supabase Storage |
-| Driver App | Flutter (Android) |
 | Maps | Leaflet.js / OpenStreetMap / CartoDB |
-| Routing | OSR&M (Open Source Routing Machine) |
+| Routing | OSRM (Open Source Routing Machine) |
 | Notifications | Firebase Cloud Messaging (FCM) |
 | Hosting | Vercel + GitHub CI/CD |
 | Version Control | Git, GitHub |
@@ -101,7 +200,6 @@ Developed by students at **Kampala International University**, AmbuLink addresse
 - Node.js 18+
 - npm or yarn
 - Supabase CLI
-- Flutter SDK (for driver app)
 - Firebase project (for FCM)
 
 ### 1. Clone the Repository
@@ -111,16 +209,15 @@ git clone https://github.com/your-org/ambulink.git
 cd ambulink
 ```
 
-### 2. Install Web App Dependencies
+### 2. Install Dependencies
 
 ```bash
-cd web
 npm install
 ```
 
 ### 3. Configure Environment Variables
 
-Create a `.env.local` file in `/web`:
+Create a `.env.local` file in the project root:
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
@@ -145,14 +242,6 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000)
 
-### 6. Run the Driver App
-
-```bash
-cd driver-app
-flutter pub get
-flutter run
-```
-
 ---
 
 ## 🔑 Demo Credentials
@@ -171,29 +260,22 @@ flutter run
 
 ```
 ambulink/
-├── web/                        # Next.js 14 web application
-│   ├── app/                    # App Router pages and layouts
-│   │   ├── (auth)/             # Login, register
-│   │   ├── dashboard/          # User dashboard + SOS
-│   │   ├── bookings/           # Booking management
-│   │   ├── track/              # Real-time tracking map
-│   │   ├── institution/        # Institutional portal
-│   │   └── admin/              # Admin dashboard
-│   ├── components/             # Shared UI components
-│   ├── lib/                    # Utilities, Supabase client, algorithms
-│   └── api/                    # Next.js API routes
-├── driver-app/                 # Flutter Android application
-│   ├── lib/
-│   │   ├── screens/            # App screens
-│   │   ├── services/           # GPS, FCM, API services
-│   │   └── models/             # Data models
-├── supabase/
-│   ├── migrations/             # Database schema migrations
-│   ├── seed.sql                # Demo seed data
-│   └── functions/              # Edge functions (if applicable)
-└── docs/
-    ├── screenshots/            # UI screenshots
-    └── diagrams/               # Architecture and flow diagrams
+├── public/
+│   ├── images/
+│   │   └── icon.png               # App icon
+│   └── screenshots/               # UI screenshots
+├── app/                           # Next.js App Router pages
+│   ├── (auth)/                    # Login, register
+│   ├── dashboard/                 # User dashboard + SOS
+│   ├── bookings/                  # Booking management
+│   ├── track/                     # Real-time tracking map
+│   ├── institution/               # Institutional portal
+│   └── admin/                     # Admin dashboard
+├── components/                    # Shared UI components
+├── lib/                           # Utilities, Supabase client, algorithms
+└── supabase/
+    ├── migrations/                # Database schema migrations
+    └── seed.sql                   # Demo seed data
 ```
 
 ---
@@ -236,6 +318,7 @@ ambulink/
 ## 🗺️ Roadmap
 
 - [ ] USSD / SMS fallback booking for areas without mobile data
+- [ ] Flutter driver mobile app (Android) — in development
 - [ ] iOS version of driver mobile application
 - [ ] AI-powered demand forecasting and driver pre-positioning
 - [ ] Vehicle telematics integration (fuel, mechanical status)
@@ -253,8 +336,8 @@ ambulink/
 | Mugisha Abdul | 2023-08-21509 |
 | Kato Ashraf | 2023-08-19539 |
 
-**Academic Supervisor:** Mr. Tumwebaze Wilson
-**Institution:** Kampala International University — School of Mathematics and Computing
+**Academic Supervisor:** Mr. Tumwebaze Wilson  
+**Institution:** Kampala International University — School of Mathematics and Computing  
 **Degree:** Bachelor of Information Technology, 2026
 
 ---
@@ -265,6 +348,6 @@ This project is submitted in partial fulfilment of the requirements for the Bach
 
 ---
 
-<p align="center">
+<div align="center">
   Built in Uganda 🇺🇬 · For Uganda · By Ugandans
-</p>
+</div>
