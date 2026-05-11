@@ -27,7 +27,7 @@ Developed by students at **Kampala International University**, AmbuLink addresse
 
 The public-facing marketing page introduces AmbuLink's value proposition — real-time tracking, sub-10-minute average response, and verified drivers. Visitors can register as a driver or institution directly from here.
 
-![Landing Page](public/screenshots/landingpage.png)
+![Landing Page](public/screenshots/landing.png)
 
 ![Landing Page — Features Section](public/screenshots/landingpage2.png)
 
