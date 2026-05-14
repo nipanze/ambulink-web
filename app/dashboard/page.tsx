@@ -156,9 +156,17 @@ function DashboardContent() {
     <div className="flex-1 p-4 md:p-6 space-y-6 overflow-y-auto">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-black text-gray-900">Dashboard</h1>
-        <span className="text-sm text-gray-400">
-          {mounted && new Date().toLocaleDateString('en-UG', { weekday:'long', day:'numeric', month:'long' })}
-        </span>
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={() => { setBookingMode('scheduled'); setSosOpen(true); }}
+            className="bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2 text-[10px] font-black uppercase px-3 py-1.5 rounded-xl transition-all shadow-md shadow-purple-100"
+          >
+            <Clock size={14} /> Schedule
+          </button>
+          <span className="hidden sm:block text-sm text-gray-400">
+            {mounted && new Date().toLocaleDateString('en-UG', { weekday:'long', day:'numeric', month:'long' })}
+          </span>
+        </div>
       </div>
 
       {/* Active booking alert */}

@@ -21,7 +21,6 @@ interface Props {
 
 const patientLinks = [
   { href: '/dashboard',           icon: LayoutDashboard, label: 'Dashboard'  },
-  { href: '/dashboard?schedule=true', icon: Clock,           label: 'Schedule Ambulance' },
   { href: '/bookings',            icon: Ambulance,       label: 'My Bookings' },
   { href: '/track',               icon: MapPin,          label: 'Track'       },
 ]
