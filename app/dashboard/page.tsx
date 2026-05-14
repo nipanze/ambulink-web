@@ -156,17 +156,9 @@ function DashboardContent() {
     <div className="flex-1 p-4 md:p-6 space-y-6 overflow-y-auto">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-black text-gray-900">Dashboard</h1>
-        <div className="flex items-center gap-3">
-          <button 
-            onClick={() => { setBookingMode('scheduled'); setSosOpen(true); }}
-            className="bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2 text-[10px] font-black uppercase px-3 py-1.5 rounded-xl transition-all shadow-md shadow-purple-100"
-          >
-            <Clock size={14} /> Schedule
-          </button>
-          <span className="hidden sm:block text-sm text-gray-400">
-            {mounted && new Date().toLocaleDateString('en-UG', { weekday:'long', day:'numeric', month:'long' })}
-          </span>
-        </div>
+        <span className="text-sm text-gray-400">
+          {mounted && new Date().toLocaleDateString('en-UG', { weekday:'long', day:'numeric', month:'long' })}
+        </span>
       </div>
 
       {/* Active booking alert */}
@@ -193,15 +185,7 @@ function DashboardContent() {
             <AlertCircle size={40} />
             <span className="text-base font-black tracking-widest">SOS</span>
           </button>
-          <p className="text-xs text-gray-400 mt-5 mb-4 text-center">Your GPS location will be shared automatically</p>
-          
-          <button 
-            onClick={() => { setBookingMode('scheduled'); setSosOpen(true); }}
-            className="flex items-center gap-2 text-sm font-bold text-gray-400 hover:text-purple-600 transition-colors py-2 px-4 rounded-full border border-gray-100 hover:border-purple-200 hover:bg-purple-50"
-          >
-            <Clock size={16} />
-            Schedule for Later
-          </button>
+          <p className="text-xs text-gray-400 mt-5 text-center">Your GPS location will be shared automatically</p>
         </div>
       )}
 
