@@ -1,7 +1,7 @@
 'use client'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Menu, X } from 'lucide-react'
+import { Menu, X, Clock } from 'lucide-react'
 
 interface Props {
   isOpen: boolean
@@ -16,12 +16,20 @@ export default function MobileHeader({ isOpen, setIsOpen }: Props) {
         <span className="font-black text-red-600 text-lg tracking-tight">AmbuLink</span>
       </div>
       
-      <button 
-        onClick={() => setIsOpen(!isOpen)}
-        className="p-2 -mr-2 text-gray-600 hover:text-gray-900 focus:outline-none"
-      >
-        {isOpen ? <X size={24} /> : <Menu size={24} />}
-      </button>
+      <div className="flex items-center gap-1">
+        <Link 
+          href="/dashboard?schedule=true"
+          className="p-2 text-purple-600 hover:bg-purple-50 rounded-full transition-colors"
+        >
+          <Clock size={20} />
+        </Link>
+        <button 
+          onClick={() => setIsOpen(!isOpen)}
+          className="p-2 text-gray-600 hover:text-gray-900 focus:outline-none"
+        >
+          {isOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
+      </div>
     </header>
   )
 }

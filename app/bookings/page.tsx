@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { Search, Filter, Loader2, MapPin, Clock } from 'lucide-react'
+import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { StatusBadge, TypeBadge } from '@/components/shared/Badges'
 import { timeAgo, formatUGX } from '@/lib/utils'
@@ -39,6 +40,9 @@ export default function BookingsPage() {
     <div className="flex-1 p-4 md:p-6 space-y-5 overflow-y-auto">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-black">Bookings</h1>
+        <Link href="/dashboard?schedule=true" className="btn-primary flex items-center gap-2 text-xs py-2">
+           <Clock size={14} /> Schedule New
+        </Link>
       </div>
 
       {/* Search + filter */}
