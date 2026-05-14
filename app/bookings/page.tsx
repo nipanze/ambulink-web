@@ -40,9 +40,6 @@ export default function BookingsPage() {
     <div className="flex-1 p-4 md:p-6 space-y-5 overflow-y-auto">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-black">Bookings</h1>
-        <Link href="/dashboard?schedule=true" className="bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2 text-[10px] font-black uppercase px-3 py-2 rounded-xl transition-all shadow-lg shadow-purple-100">
-           <Clock size={14} /> Schedule New
-        </Link>
       </div>
 
       {/* Search + filter */}
