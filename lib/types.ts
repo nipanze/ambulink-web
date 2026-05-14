@@ -194,6 +194,7 @@ export interface BookingOverview {
   distance_km?:      number
   created_at:        string
   assigned_at?:      string
+  scheduled_at?:     string
   dropoff_at?:       string
 }
 

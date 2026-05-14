@@ -159,7 +159,7 @@ export default function AdminDashboard() {
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 border-b border-gray-100">
                   <tr>
-                    {['Ref','Status','Patient','Pickup','Driver','Time','Action'].map(h => (
+                    {['Ref','Status','Type','Patient','Pickup','Time','Action'].map(h => (
                       <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">{h}</th>
                     ))}
                   </tr>
@@ -169,19 +169,19 @@ export default function AdminDashboard() {
                     <tr key={b.booking_id} className={`hover:bg-gray-50 transition-colors ${b.is_priority ? 'bg-red-50/50' : ''}`}>
                       <td className="px-4 py-3 font-mono text-xs text-gray-600">{b.booking_ref}</td>
                       <td className="px-4 py-3"><StatusBadge status={b.status} /></td>
+                      <td className="px-4 py-3"><TypeBadge type={b.booking_type} /></td>
                       <td className="px-4 py-3 text-gray-700 font-bold whitespace-nowrap">{b.patient_name}</td>
                       <td className="px-4 py-3 text-gray-500 max-w-[140px] truncate">{b.pickup_address || '—'}</td>
-                      <td className="px-4 py-3 text-gray-700 whitespace-nowrap">
-                         {b.driver_name ? (
-                           <div className="flex flex-col">
-                             <span className="font-bold">{b.driver_name}</span>
-                             <span className="text-[10px] font-mono text-gray-400">{b.vehicle_plate}</span>
+                      <td className="px-4 py-3 whitespace-nowrap text-xs text-gray-400">
+                         {b.booking_type === 'scheduled' && b.scheduled_at ? (
+                           <div className="flex flex-col text-purple-600 font-bold">
+                             <span>{new Date(b.scheduled_at).toLocaleDateString()}</span>
+                             <span>{new Date(b.scheduled_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                            </div>
                          ) : (
-                           <span className="text-gray-300 italic text-xs">Unassigned</span>
+                           timeAgo(b.created_at)
                          )}
                       </td>
-                      <td className="px-4 py-3 text-gray-400 whitespace-nowrap text-xs">{timeAgo(b.created_at)}</td>
                       <td className="px-4 py-3">
                          {b.status === 'requested' && (
                            <button 

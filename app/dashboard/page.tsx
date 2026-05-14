@@ -11,9 +11,13 @@ export default function DashboardPage() {
   const [bookings, setBookings]   = useState<Booking[]>([])
   const [loading,  setLoading]    = useState(true)
   const [sosOpen,  setSosOpen]    = useState(false)
-  const [sosForm,  setSosForm]    = useState({ address: '', landmark: '', notes: '' })
   const [sosLoading, setSosLoading] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [bookingMode, setBookingMode] = useState<'emergency'|'scheduled'>('emergency')
+  const [form, setForm] = useState({ 
+    address: '', landmark: '', notes: '', 
+    scheduled_at: '', destination: '' 
+  })
 
   useEffect(() => { setMounted(true) }, [])
 
@@ -40,7 +44,7 @@ export default function DashboardPage() {
       return
     }
     if (dbUser.role === 'driver') {
-      window.location.href = '/driver' // assuming driver dashboard exists
+      window.location.href = '/driver'
       return
     }
     if (dbUser.role === 'institution_rep') {
@@ -73,16 +77,29 @@ export default function DashboardPage() {
     return () => { supabase.removeChannel(channel) }
   }, [fetchBookings])
 
-  async function submitSOS() {
+  async function submitBooking() {
     setSosLoading(true)
     try {
-      // Get GPS
-      const pos = await new Promise<GeolocationPosition>((res, rej) =>
-        navigator.geolocation.getCurrentPosition(res, rej, { timeout: 8000 })
-      ).catch(() => null)
+      // Validate scheduled date
+      if (bookingMode === 'scheduled' && !form.scheduled_at) {
+        throw new Error('Please select a date and time for your trip')
+      }
+
+      // Get GPS (for emergency) or use address
+      let lat = 0.3176, lng = 32.5825
+      if (bookingMode === 'emergency') {
+        const pos = await new Promise<GeolocationPosition>((res, rej) =>
+          navigator.geolocation.getCurrentPosition(res, rej, { timeout: 8000 })
+        ).catch(() => null)
+        if (pos) {
+          lat = pos.coords.latitude
+          lng = pos.coords.longitude
+        }
+      }
 
       const { data: { session } } = await supabase.auth.getSession()
-      if (!session) throw new Error('Please sign in before sending an SOS request')
+      if (!session) throw new Error('Please sign in before booking')
+      
       const res = await fetch('/api/bookings', {
         method: 'POST',
         headers: { 
@@ -90,21 +107,30 @@ export default function DashboardPage() {
           'Authorization': `Bearer ${session.access_token}`
         },
         body: JSON.stringify({
-          type: 'emergency',
-          pickup_latitude:  pos?.coords.latitude  ?? 0.3176,
-          pickup_longitude: pos?.coords.longitude ?? 32.5825,
-          pickup_address:   sosForm.address || 'Location via GPS',
-          pickup_landmark:  sosForm.landmark,
-          patient_notes:    sosForm.notes,
-          destination_name: 'Nearest available hospital',
+          type: bookingMode,
+          pickup_latitude:  lat,
+          pickup_longitude: lng,
+          pickup_address:   form.address || (bookingMode === 'emergency' ? 'Location via GPS' : ''),
+          pickup_landmark:  form.landmark,
+          patient_notes:    form.notes,
+          destination_name: form.destination || (bookingMode === 'emergency' ? 'Nearest available hospital' : ''),
+          scheduled_at:     bookingMode === 'scheduled' ? form.scheduled_at : null,
         }),
       })
-      if (!res.ok) throw new Error('Failed to create booking')
-      toast.success('Emergency request sent! Finding nearest driver…')
+
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.error || 'Failed to create booking')
+      }
+
+      toast.success(bookingMode === 'emergency' 
+        ? 'Emergency request sent! Finding nearest driver…' 
+        : 'Ambulance scheduled successfully!'
+      )
       setSosOpen(false)
       fetchBookings()
     } catch (err: any) {
-      toast.error(err.message || 'Could not submit SOS request')
+      toast.error(err.message || 'Could not submit request')
     } finally {
       setSosLoading(false)
     }
@@ -139,45 +165,102 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* SOS Button */}
+      {/* Quick Actions */}
       {!activeBooking && (
-        <div className="card flex flex-col items-center py-10">
-          <p className="text-sm text-gray-500 mb-6 font-medium">Need an ambulance right now?</p>
-          <button className="sos-btn" onClick={() => setSosOpen(true)}>
-            <AlertCircle size={40} />
-            <span className="text-base font-black tracking-widest">SOS</span>
-          </button>
-          <p className="text-xs text-gray-400 mt-5">Your GPS location will be shared automatically</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="card flex flex-col items-center py-10 transition-transform hover:scale-[1.02]">
+            <p className="text-sm text-gray-500 mb-6 font-medium">Need an ambulance right now?</p>
+            <button className="sos-btn" onClick={() => { setBookingMode('emergency'); setSosOpen(true); }}>
+              <AlertCircle size={40} />
+              <span className="text-base font-black tracking-widest">SOS</span>
+            </button>
+            <p className="text-xs text-gray-400 mt-5 text-center">One-tap emergency dispatch<br/>GPS shared automatically</p>
+          </div>
+
+          <div className="card flex flex-col items-center py-10 transition-transform hover:scale-[1.02] border-dashed border-2 border-purple-100 bg-purple-50/10">
+            <p className="text-sm text-gray-500 mb-6 font-medium">Plan a future trip?</p>
+            <button className="sos-btn bg-purple-600 border-purple-700 shadow-purple-200 hover:bg-purple-700" onClick={() => { setBookingMode('scheduled'); setSosOpen(true); }}>
+              <Clock size={40} />
+              <span className="text-sm font-black tracking-widest">SCHEDULE</span>
+            </button>
+            <p className="text-xs text-gray-400 mt-5 text-center">Book for a specific date/time<br/>Ideal for hospital appointments</p>
+          </div>
         </div>
       )}
 
-      {/* SOS modal */}
+      {/* Booking modal */}
       {sosOpen && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-end md:items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-sm space-y-4">
-            <div className="flex items-center gap-2">
-              <AlertCircle className="text-red-600" size={22} />
-              <h2 className="text-lg font-black text-red-600">Emergency Request</h2>
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm space-y-4 shadow-2xl border border-gray-100">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                {bookingMode === 'emergency' ? (
+                  <AlertCircle className="text-red-600" size={22} />
+                ) : (
+                  <Clock className="text-purple-600" size={22} />
+                )}
+                <h2 className={`text-lg font-black ${bookingMode === 'emergency' ? 'text-red-600' : 'text-purple-600'}`}>
+                  {bookingMode === 'emergency' ? 'Emergency SOS' : 'Schedule Trip'}
+                </h2>
+              </div>
+              <div className="flex bg-gray-100 p-1 rounded-lg">
+                <button 
+                  className={`px-2 py-1 text-[10px] font-bold rounded-md transition-colors ${bookingMode === 'emergency' ? 'bg-white shadow-sm text-red-600' : 'text-gray-500'}`}
+                  onClick={() => setBookingMode('emergency')}
+                >SOS</button>
+                <button 
+                  className={`px-2 py-1 text-[10px] font-bold rounded-md transition-colors ${bookingMode === 'scheduled' ? 'bg-white shadow-sm text-purple-600' : 'text-gray-500'}`}
+                  onClick={() => setBookingMode('scheduled')}
+                >LATER</button>
+              </div>
+            </div>
+
+            {bookingMode === 'scheduled' && (
+              <div>
+                <label className="text-xs font-medium text-gray-700 mb-1 block">Trip Date & Time</label>
+                <input 
+                  type="datetime-local" 
+                  className="input" 
+                  value={form.scheduled_at} 
+                  onChange={e => setForm(f => ({...f, scheduled_at: e.target.value}))}
+                  min={new Date().toISOString().slice(0, 16)}
+                />
+              </div>
+            )}
+
+            <div>
+              <label className="text-xs font-medium text-gray-700 mb-1 block">
+                {bookingMode === 'emergency' ? 'Your address / location' : 'Pickup Address'}
+              </label>
+              <input className="input" placeholder={bookingMode === 'emergency' ? 'e.g. Makerere University Gate 1' : 'e.g. Home address'} value={form.address} onChange={e => setForm(f => ({...f, address: e.target.value}))} />
             </div>
 
             <div>
-              <label className="text-xs font-medium text-gray-700 mb-1 block">Your address / location</label>
-              <input className="input" placeholder="e.g. Makerere University Gate 1" value={sosForm.address} onChange={e => setSosForm(f => ({...f, address: e.target.value}))} />
-            </div>
-            <div>
-              <label className="text-xs font-medium text-gray-700 mb-1 block">Nearest landmark (optional)</label>
-              <input className="input" placeholder="e.g. Near Shell Petrol Station" value={sosForm.landmark} onChange={e => setSosForm(f => ({...f, landmark: e.target.value}))} />
-            </div>
-            <div>
-              <label className="text-xs font-medium text-gray-700 mb-1 block">Patient notes (optional)</label>
-              <textarea className="input resize-none" rows={2} placeholder="e.g. Chest pains, 65yo male" value={sosForm.notes} onChange={e => setSosForm(f => ({...f, notes: e.target.value}))} />
+              <label className="text-xs font-medium text-gray-700 mb-1 block">
+                {bookingMode === 'emergency' ? 'Nearest landmark (optional)' : 'Destination (Hospital/Home)'}
+              </label>
+              <input 
+                className="input" 
+                placeholder={bookingMode === 'emergency' ? 'e.g. Near Shell Petrol Station' : 'e.g. Mulago Hospital'} 
+                value={bookingMode === 'emergency' ? form.landmark : form.destination} 
+                onChange={e => setForm(f => ({...f, [bookingMode === 'emergency' ? 'landmark' : 'destination']: e.target.value}))} 
+              />
             </div>
 
-            <div className="flex gap-3">
+            <div>
+              <label className="text-xs font-medium text-gray-700 mb-1 block">Special Notes (optional)</label>
+              <textarea className="input resize-none" rows={2} placeholder="e.g. Patient needs wheelchair assistance" value={form.notes} onChange={e => setForm(f => ({...f, notes: e.target.value}))} />
+            </div>
+
+            <div className="flex gap-3 pt-2">
               <button className="btn-secondary flex-1" onClick={() => setSosOpen(false)}>Cancel</button>
-              <button className="btn-primary flex-1 flex items-center justify-center gap-2" onClick={submitSOS} disabled={sosLoading}>
-                {sosLoading ? <Loader2 size={16} className="animate-spin" /> : <AlertCircle size={16} />}
-                {sosLoading ? 'Sending…' : 'Send SOS'}
+              <button 
+                className={`btn-primary flex-1 flex items-center justify-center gap-2 ${bookingMode === 'scheduled' ? 'bg-purple-600 border-purple-700' : ''}`} 
+                onClick={submitBooking} 
+                disabled={sosLoading}
+              >
+                {sosLoading ? <Loader2 size={16} className="animate-spin" /> : (bookingMode === 'emergency' ? <AlertCircle size={16} /> : <CheckCircle size={16} />)}
+                {sosLoading ? 'Processing…' : (bookingMode === 'emergency' ? 'Send SOS' : 'Confirm')}
               </button>
             </div>
           </div>

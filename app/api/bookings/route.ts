@@ -40,6 +40,9 @@ export async function POST(req: NextRequest) {
       patientId = patient.id
     }
 
+    // Determine if we should auto-assign (only for emergency right now)
+    const shouldAutoAssign = body.type === 'emergency' || !body.scheduled_at
+
     const { data: booking, error } = await supabase
       .from('bookings')
       .insert({
@@ -67,19 +70,25 @@ export async function POST(req: NextRequest) {
 
     if (error) throw error
 
-    // Try to auto-assign nearest driver
-    const { data: nearestDriver } = await supabase
-      .rpc('sp_find_nearest_driver', {
-        p_lat:    body.pickup_latitude,
-        p_lng:    body.pickup_longitude,
-        p_max_km: 50,
-      })
+    // Try to auto-assign nearest driver ONLY for emergency
+    if (shouldAutoAssign) {
+      const { data: nearestDriver } = await supabase
+        .rpc('sp_find_nearest_driver', {
+          p_lat:    body.pickup_latitude,
+          p_lng:    body.pickup_longitude,
+          p_max_km: 50,
+        })
 
-    if (nearestDriver && nearestDriver.length > 0) {
-      await supabase
-        .from('bookings')
-        .update({ driver_id: nearestDriver[0].driver_id, status: 'assigned', assigned_at: new Date().toISOString() })
-        .eq('id', booking.id)
+      if (nearestDriver && nearestDriver.length > 0) {
+        await supabase
+          .from('bookings')
+          .update({ 
+            driver_id: nearestDriver[0].driver_id, 
+            status: 'assigned', 
+            assigned_at: new Date().toISOString() 
+          })
+          .eq('id', booking.id)
+      }
     }
 
     return NextResponse.json({ success: true, booking })
