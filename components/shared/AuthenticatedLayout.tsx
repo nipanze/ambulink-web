@@ -59,36 +59,53 @@ export default function AuthenticatedLayout({ children }: { children: React.Reac
 
   useEffect(() => {
     if (!user) return
-    fetchCounts()
-    
-    // Global SOS Alerts for Admins
-    const channel = supabase.channel('emergency-alerts')
+    // 1. Admin Emergency SOS Alerts
+    const emergencyChannel = supabase.channel('emergency-alerts')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'bookings' }, async (payload) => {
         const newBooking = payload.new as any
-        
         if (user.role === 'admin' && newBooking.status === 'requested') {
-          // 1. Play Emergency Sound
           try {
             const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3')
             audio.volume = 0.5
             audio.play()
-          } catch (e) { /* Audio play might be blocked by browser */ }
+          } catch (e) {}
 
-          // 2. Show Toast
           toast.error('🚨 NEW EMERGENCY SOS!', {
             description: 'A new emergency request requires your immediate attention.',
             duration: 8000,
-            action: {
-              label: 'DISPATCH',
-              onClick: () => window.location.href = '/admin/bookings'
-            }
+            action: { label: 'DISPATCH', onClick: () => window.location.href = '/admin/bookings' }
           })
         }
         fetchCounts()
       })
       .subscribe()
-    
-    return () => { supabase.removeChannel(channel) }
+
+    // 2. Global Status Notifications (for all users, filter by user.id)
+    const notifChannel = supabase.channel('global-notifications')
+      .on('postgres_changes', { 
+        event: 'INSERT', 
+        schema: 'public', 
+        table: 'notifications',
+        filter: `user_id=eq.${user.id}`
+      }, async (payload) => {
+        const newNotif = payload.new as any
+        toast(newNotif.title, { description: newNotif.body, duration: 6000 })
+        
+        if (user.role === 'patient') {
+          try {
+            const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3')
+            audio.volume = 0.3
+            audio.play()
+          } catch (e) {}
+        }
+        fetchCounts()
+      })
+      .subscribe()
+
+    return () => { 
+      supabase.removeChannel(emergencyChannel) 
+      supabase.removeChannel(notifChannel)
+    }
   }, [user, fetchCounts])
 
   useEffect(() => {

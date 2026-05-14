@@ -40,12 +40,6 @@ BEGIN
                 updated_at = NOW()
             WHERE id = r.id;
             
-            -- Create a notification for the patient
-            INSERT INTO public.notifications (user_id, event, title, body, related_booking_id, status)
-            VALUES (r.patient_user_id, 'driver_assigned', 'Scheduled Ambulance Assigned', 
-                    'A driver has been assigned for your scheduled trip (' || r.booking_ref || '). They are moving to your location.', 
-                    r.id, 'pending');
-            
             processed_booking_id := r.id;
             processed_booking_ref := r.booking_ref;
             action_taken := 'AUTO_ASSIGNED';
