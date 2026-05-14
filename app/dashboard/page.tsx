@@ -4,10 +4,13 @@ import { AlertCircle, MapPin, Clock, CheckCircle, XCircle, Loader2, Phone, Ambul
 import { supabase } from '@/lib/supabase'
 import { StatusBadge, TypeBadge } from '@/components/shared/Badges'
 import { timeAgo, formatUGX } from '@/lib/utils'
+import { Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import type { Booking } from '@/lib/types'
 import { toast } from 'sonner'
 
-export default function DashboardPage() {
+function DashboardContent() {
+  const searchParams = useSearchParams()
   const [bookings, setBookings]   = useState<Booking[]>([])
   const [loading,  setLoading]    = useState(true)
   const [sosOpen,  setSosOpen]    = useState(false)
@@ -20,6 +23,15 @@ export default function DashboardPage() {
   })
 
   useEffect(() => { setMounted(true) }, [])
+
+  // Handle URL params for mode
+  useEffect(() => {
+    const schedule = searchParams.get('schedule')
+    if (schedule === 'true') {
+      setBookingMode('scheduled')
+      setSosOpen(true)
+    }
+  }, [searchParams])
 
   const fetchBookings = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession()
@@ -165,26 +177,23 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Quick Actions */}
+      {/* SOS Button Area */}
       {!activeBooking && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="card flex flex-col items-center py-10 transition-transform hover:scale-[1.02]">
-            <p className="text-sm text-gray-500 mb-6 font-medium">Need an ambulance right now?</p>
-            <button className="sos-btn" onClick={() => { setBookingMode('emergency'); setSosOpen(true); }}>
-              <AlertCircle size={40} />
-              <span className="text-base font-black tracking-widest">SOS</span>
-            </button>
-            <p className="text-xs text-gray-400 mt-5 text-center">One-tap emergency dispatch<br/>GPS shared automatically</p>
-          </div>
-
-          <div className="card flex flex-col items-center py-10 transition-transform hover:scale-[1.02] border-dashed border-2 border-purple-100 bg-purple-50/10">
-            <p className="text-sm text-gray-500 mb-6 font-medium">Plan a future trip?</p>
-            <button className="sos-btn bg-purple-600 border-purple-700 shadow-purple-200 hover:bg-purple-700" onClick={() => { setBookingMode('scheduled'); setSosOpen(true); }}>
-              <Clock size={40} />
-              <span className="text-sm font-black tracking-widest">SCHEDULE</span>
-            </button>
-            <p className="text-xs text-gray-400 mt-5 text-center">Book for a specific date/time<br/>Ideal for hospital appointments</p>
-          </div>
+        <div className="card flex flex-col items-center py-10">
+          <p className="text-sm text-gray-500 mb-6 font-medium">Need an ambulance right now?</p>
+          <button className="sos-btn" onClick={() => { setBookingMode('emergency'); setSosOpen(true); }}>
+            <AlertCircle size={40} />
+            <span className="text-base font-black tracking-widest">SOS</span>
+          </button>
+          <p className="text-xs text-gray-400 mt-5 mb-4 text-center">Your GPS location will be shared automatically</p>
+          
+          <button 
+            onClick={() => { setBookingMode('scheduled'); setSosOpen(true); }}
+            className="flex items-center gap-2 text-sm font-bold text-gray-400 hover:text-purple-600 transition-colors py-2 px-4 rounded-full border border-gray-100 hover:border-purple-200 hover:bg-purple-50"
+          >
+            <Clock size={16} />
+            Schedule for Later
+          </button>
         </div>
       )}
 
@@ -346,5 +355,13 @@ export default function DashboardPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={<div className="flex-1 flex items-center justify-center"><Loader2 className="animate-spin text-gray-400" /></div>}>
+      <DashboardContent />
+    </Suspense>
   )
 }
