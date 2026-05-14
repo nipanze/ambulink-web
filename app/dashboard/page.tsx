@@ -5,12 +5,13 @@ import { supabase } from '@/lib/supabase'
 import { StatusBadge, TypeBadge } from '@/components/shared/Badges'
 import { timeAgo, formatUGX } from '@/lib/utils'
 import { Suspense } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import type { Booking } from '@/lib/types'
 import { toast } from 'sonner'
 
 function DashboardContent() {
   const searchParams = useSearchParams()
+  const router = useRouter()
   const [bookings, setBookings]   = useState<Booking[]>([])
   const [loading,  setLoading]    = useState(true)
   const [sosOpen,  setSosOpen]    = useState(false)
@@ -30,8 +31,10 @@ function DashboardContent() {
     if (schedule === 'true') {
       setBookingMode('scheduled')
       setSosOpen(true)
+      // Clear the param so clicking again works
+      router.replace('/dashboard', { scroll: false })
     }
-  }, [searchParams])
+  }, [searchParams, router])
 
   const fetchBookings = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession()

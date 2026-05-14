@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase'
 import Image from 'next/image'
 import { Loader2 } from 'lucide-react'
 import Sidebar from './Sidebar'
-import MobileHeader from './MobileHeader'
+import TopBar from './TopBar'
 import type { User } from '@/lib/types'
 import { toast } from 'sonner'
 import Link from 'next/link'
@@ -128,10 +128,12 @@ export default function AuthenticatedLayout({ children }: { children: React.Reac
 
   return (
     <div className="flex flex-col md:flex-row h-screen bg-gray-50 overflow-hidden">
-      <MobileHeader isOpen={isOpen} setIsOpen={setIsOpen} />
       <Sidebar user={user} isOpen={isOpen} onClose={() => setIsOpen(false)} badges={badges} />
       <main className="flex-1 flex flex-col overflow-hidden relative">
-        {children}
+        <TopBar onMenuClick={() => setIsOpen(true)} />
+        <div className="flex-1 overflow-hidden flex flex-col relative">
+          {children}
+        </div>
       </main>
     </div>
   )
