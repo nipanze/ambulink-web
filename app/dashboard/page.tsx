@@ -151,9 +151,17 @@ function DashboardContent() {
     }
   }
 
-  const activeBooking = bookings.find(b =>
-    ['requested','assigned','en_route','at_scene','transporting'].includes(b.status)
-  )
+  const activeBooking = bookings.find(b => {
+    // 1. Always block if it's an emergency in progress
+    if (b.type === 'emergency' && ['requested','assigned','en_route','at_scene','transporting'].includes(b.status)) {
+      return true
+    }
+    // 2. Block if it's a scheduled trip that has already been picked up or is currently being serviced
+    if (b.type === 'scheduled' && ['assigned','en_route','at_scene','transporting'].includes(b.status)) {
+      return true
+    }
+    return false
+  })
 
   return (
     <div className="flex-1 p-4 md:p-6 space-y-6 overflow-y-auto">
