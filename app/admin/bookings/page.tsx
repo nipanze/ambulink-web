@@ -14,6 +14,8 @@ export default function AdminBookingsPage() {
   const [status,   setStatus]   = useState<BookingStatus | 'all'>('all')
   const [assigning, setAssigning] = useState<number | null>(null)
   const [onlineDrivers, setOnlineDrivers] = useState<any[]>([])
+  const [editingFare, setEditingFare] = useState<number | null>(null)
+  const [newFare, setNewFare] = useState('')
 
   async function load() {
     setLoading(true)
@@ -63,6 +65,16 @@ export default function AdminBookingsPage() {
     } else {
       toast.success('Driver assigned successfully')
       setAssigning(null)
+      load()
+    }
+  }
+
+  async function saveFare(id: number) {
+    if (!newFare || isNaN(Number(newFare))) return
+    const { error } = await supabase.from('bookings').update({ fare_amount: Number(newFare) }).eq('id', id)
+    if (error) toast.error(error.message)
+    else {
+      setEditingFare(null)
       load()
     }
   }
@@ -123,7 +135,27 @@ export default function AdminBookingsPage() {
                       </td>
                       <td className="px-3 py-3 whitespace-nowrap text-gray-700">{b.driver_name || '—'}</td>
                       <td className="px-3 py-3 font-mono text-xs text-gray-500">{b.vehicle_plate || '—'}</td>
-                      <td className="px-3 py-3 text-gray-700 whitespace-nowrap">{formatUGX(b.fare_amount)}</td>
+                      <td className="px-3 py-3 whitespace-nowrap">
+                        {editingFare === b.booking_id ? (
+                          <div className="flex items-center gap-1">
+                            <input 
+                              autoFocus 
+                              className="w-20 px-2 py-1 text-xs border rounded" 
+                              value={newFare} 
+                              onChange={e => setNewFare(e.target.value)}
+                              onKeyDown={e => e.key === 'Enter' && saveFare(b.booking_id)}
+                            />
+                            <button onClick={() => saveFare(b.booking_id)} className="text-green-600 font-bold">✓</button>
+                          </div>
+                        ) : (
+                          <button 
+                            onClick={() => { setEditingFare(b.booking_id); setNewFare(String(b.fare_amount || '')) }}
+                            className="hover:underline font-bold text-gray-700"
+                          >
+                            {b.fare_amount ? formatUGX(b.fare_amount) : 'Set Fare'}
+                          </button>
+                        )}
+                      </td>
                       <td className="px-3 py-3 text-gray-400 whitespace-nowrap text-xs">{timeAgo(b.created_at)}</td>
                       <td className="px-3 py-3 text-right">
                         {b.status === 'requested' && (
@@ -157,7 +189,18 @@ export default function AdminBookingsPage() {
                     </div>
                     <div className="text-right flex-shrink-0">
                       <TypeBadge type={b.booking_type} />
-                      <p className="text-sm font-black text-red-600 mt-1">{formatUGX(b.fare_amount)}</p>
+                      <div className="mt-1">
+                        {editingFare === b.booking_id ? (
+                          <div className="flex items-center gap-1 justify-end">
+                            <input autoFocus className="w-16 px-1 py-0.5 text-[10px] border rounded" value={newFare} onChange={e => setNewFare(e.target.value)} />
+                            <button onClick={() => saveFare(b.booking_id)} className="text-green-600 font-bold text-xs">✓</button>
+                          </div>
+                        ) : (
+                          <button onClick={() => { setEditingFare(b.booking_id); setNewFare(String(b.fare_amount || '')) }} className="text-sm font-black text-red-600 underline decoration-dotted">
+                            {b.fare_amount ? formatUGX(b.fare_amount) : 'Set Fare'}
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
 
