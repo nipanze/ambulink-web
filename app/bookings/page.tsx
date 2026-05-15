@@ -89,7 +89,16 @@ export default function BookingsPage() {
                       <td className="px-4 py-3 text-gray-600 max-w-[140px] truncate">{b.destination_name || '—'}</td>
                       <td className="px-4 py-3 text-gray-700">{formatUGX(b.fare_amount)}</td>
                       <td className="px-4 py-3 text-gray-400 whitespace-nowrap">
-                        <Clock size={11} className="inline mr-1" />{timeAgo(b.created_at)}
+                        {b.type === 'scheduled' && b.scheduled_at ? (
+                          <div className="flex flex-col leading-tight text-purple-600 font-bold">
+                            <span>{new Date(b.scheduled_at).toLocaleDateString()}</span>
+                            <span>{new Date(b.scheduled_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                          </div>
+                        ) : (
+                          <>
+                            <Clock size={11} className="inline mr-1" />{timeAgo(b.created_at)}
+                          </>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -114,6 +123,12 @@ export default function BookingsPage() {
                       <MapPin size={14} className="text-red-500 mt-0.5 flex-shrink-0" />
                       <span className="line-clamp-2">{b.pickup_address || 'Current Location'}</span>
                     </div>
+                    {b.type === 'scheduled' && b.scheduled_at && (
+                      <div className="flex items-center gap-2 text-xs text-purple-600 font-bold pl-5">
+                        <Clock size={12} />
+                        <span>{new Date(b.scheduled_at).toLocaleDateString()} @ {new Date(b.scheduled_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                      </div>
+                    )}
                     {b.destination_name && (
                       <div className="flex items-center gap-2 text-xs text-gray-500 pl-5">
                         <div className="w-1 h-1 rounded-full bg-gray-300" />
@@ -123,7 +138,7 @@ export default function BookingsPage() {
                   </div>
                   <div className="flex items-center justify-end gap-1 text-[10px] text-gray-400 pt-1">
                     <Clock size={10} />
-                    {timeAgo(b.created_at)}
+                    Created {timeAgo(b.created_at)}
                   </div>
                 </div>
               ))}

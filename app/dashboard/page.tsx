@@ -174,17 +174,29 @@ function DashboardContent() {
 
       {/* Active booking alert */}
       {activeBooking && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
-          <div className="animate-pulse-fast text-red-600 mt-0.5">
-            <Loader2 size={18} className="animate-spin" />
+        <div className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm flex items-start gap-3">
+          <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center text-red-600 animate-pulse-fast mt-0.5">
+            <Ambulance size={20} />
           </div>
-          <div className="flex-1">
-            <p className="font-semibold text-red-800">Active Booking — {activeBooking.booking_ref}</p>
-            <p className="text-sm text-red-600 mt-0.5">
-              <StatusBadge status={activeBooking.status} /> · {activeBooking.pickup_address || 'Pickup location set'}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <p className="font-black text-gray-900 tracking-tight">{activeBooking.booking_ref}</p>
+              <TypeBadge type={activeBooking.type} />
+            </div>
+            
+            <p className="text-sm text-gray-500 flex items-center gap-1.5 mt-1">
+              <StatusBadge status={activeBooking.status} />
+              {activeBooking.type === 'scheduled' && activeBooking.scheduled_at && (
+                <span className="text-purple-600 font-bold ml-1">
+                  for {new Date(activeBooking.scheduled_at).toLocaleDateString()} @ {new Date(activeBooking.scheduled_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </span>
+              )}
+            </p>
+            <p className="text-xs text-gray-400 mt-2 truncate">
+              Pickup: {activeBooking.pickup_address || 'Current Location'}
             </p>
           </div>
-          <a href={`/track?booking=${activeBooking.id}`} className="btn-primary text-xs py-1.5">Track</a>
+          <a href={`/track?booking=${activeBooking.id}`} className="btn-primary text-xs py-1.5 px-4 rounded-full">Track</a>
         </div>
       )}
 
