@@ -71,11 +71,19 @@ export default function AdminBookingsPage() {
 
   async function saveFare(id: number) {
     if (!newFare || isNaN(Number(newFare))) return
-    const { error } = await supabase.from('bookings').update({ fare_amount: Number(newFare) }).eq('id', id)
-    if (error) toast.error(error.message)
-    else {
+    
+    const { error } = await supabase
+      .from('bookings')
+      .update({ fare_amount: Number(newFare) })
+      .eq('id', id)
+
+    if (error) {
+      toast.error('Failed to update fare: ' + error.message)
+    } else {
+      toast.success('Fare updated successfully')
       setEditingFare(null)
-      load()
+      // Instant local state update
+      setBookings(prev => prev.map(b => b.booking_id === id ? { ...b, fare_amount: Number(newFare) } : b))
     }
   }
 

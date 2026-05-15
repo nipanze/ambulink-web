@@ -68,9 +68,20 @@ export default function AdminDashboard() {
 
   async function saveFare(id: number) {
     if (!newFare || isNaN(Number(newFare))) return
-    const { error } = await supabase.from('bookings').update({ fare_amount: Number(newFare) }).eq('id', id)
-    if (error) alert(error.message)
-    else setEditingFare(null)
+    
+    // Explicitly target the 'id' column in the bookings table
+    const { error } = await supabase
+      .from('bookings')
+      .update({ fare_amount: Number(newFare) })
+      .eq('id', id)
+    
+    if (error) {
+      alert('Error updating fare: ' + error.message)
+    } else {
+      setEditingFare(null)
+      // Manually update the local overview state to show the change instantly
+      setOverview(prev => prev.map(b => b.booking_id === id ? { ...b, fare_amount: Number(newFare) } : b))
+    }
   }
 
   const todayStats = stats[stats.length - 1]
