@@ -15,6 +15,8 @@ export default function AdminDashboard() {
   const [assigning, setAssigning] = useState<number | null>(null)
   const [onlineDrivers, setOnlineDrivers] = useState<any[]>([])
   const [refreshing, setRefreshing] = useState(false)
+  const [editingFare, setEditingFare] = useState<number | null>(null)
+  const [newFare, setNewFare] = useState('')
 
   useEffect(() => {
     async function load() {
@@ -62,6 +64,13 @@ export default function AdminDashboard() {
       setAssigning(null)
       // load() will be triggered by realtime sub
     }
+  }
+
+  async function saveFare(id: number) {
+    if (!newFare || isNaN(Number(newFare))) return
+    const { error } = await supabase.from('bookings').update({ fare_amount: Number(newFare) }).eq('id', id)
+    if (error) alert(error.message)
+    else setEditingFare(null)
   }
 
   const todayStats = stats[stats.length - 1]
@@ -159,7 +168,7 @@ export default function AdminDashboard() {
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 border-b border-gray-100">
                   <tr>
-                    {['Ref','Status','Type','Patient','Pickup','Time','Action'].map(h => (
+                    {['Ref','Status','Type','Patient','Pickup','Time','Fare','Action'].map(h => (
                       <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">{h}</th>
                     ))}
                   </tr>
@@ -180,6 +189,27 @@ export default function AdminDashboard() {
                            </div>
                          ) : (
                            timeAgo(b.created_at)
+                         )}
+                      </td>
+                      <td className="px-4 py-3">
+                         {editingFare === b.booking_id ? (
+                           <div className="flex items-center gap-1">
+                             <input 
+                               autoFocus
+                               className="w-20 px-2 py-1 text-xs border rounded" 
+                               value={newFare}
+                               onChange={e => setNewFare(e.target.value)}
+                               onKeyDown={e => e.key === 'Enter' && saveFare(b.booking_id)}
+                             />
+                             <button onClick={() => saveFare(b.booking_id)} className="text-green-600 font-bold">✓</button>
+                           </div>
+                         ) : (
+                           <button 
+                             onClick={() => { setEditingFare(b.booking_id); setNewFare(String(b.fare_amount || '')) }}
+                             className="hover:underline font-bold text-gray-700"
+                           >
+                             {b.fare_amount ? formatUGX(b.fare_amount) : 'Set Fare'}
+                           </button>
                          )}
                       </td>
                       <td className="px-4 py-3">
