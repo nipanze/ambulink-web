@@ -188,24 +188,35 @@ function DashboardContent() {
             
             <p className="text-sm text-gray-500 flex items-center gap-1.5 mt-1">
               <StatusBadge status={activeBooking.status} />
-              {activeBooking.type === 'scheduled' && activeBooking.scheduled_at && (
-                <span className="text-purple-600 font-bold ml-1">
-                  for {new Date(activeBooking.scheduled_at).toLocaleDateString()} @ {new Date(activeBooking.scheduled_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </span>
+              {activeBooking.type === 'scheduled' && (
+                activeBooking.fare_amount ? (
+                  <span className="text-green-600 font-black ml-1">
+                    Price Set: {formatUGX(activeBooking.fare_amount)}
+                  </span>
+                ) : (
+                  <span className="text-amber-600 font-bold ml-1 animate-pulse italic">
+                    (Calculating Fare...)
+                  </span>
+                )
               )}
             </p>
+            {activeBooking.type === 'scheduled' && activeBooking.scheduled_at && (
+              <p className="text-[10px] text-purple-600 font-bold mt-1">
+                Pickup: {new Date(activeBooking.scheduled_at).toLocaleDateString()} @ {new Date(activeBooking.scheduled_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </p>
+            )}
             <p className="text-xs text-gray-400 mt-2 truncate">
               Pickup: {activeBooking.pickup_address || 'Current Location'}
             </p>
           </div>
           <div className="flex flex-col gap-2">
             <a href={`/track?booking=${activeBooking.id}`} className="btn-primary text-[10px] py-1.5 px-3 rounded-full text-center">Track</a>
-            {activeBooking.payment_status === 'unpaid' && (
+            {activeBooking.payment_status === 'unpaid' && activeBooking.fare_amount && (
               <button 
                 onClick={() => setPayModal(true)}
-                className="bg-green-600 text-white text-[10px] font-bold py-1.5 px-3 rounded-full hover:bg-green-700 transition-colors"
+                className="bg-green-600 text-white text-[10px] font-black py-1.5 px-3 rounded-full hover:bg-green-700 shadow-sm transition-all"
               >
-                Pay Now
+                Review & Pay
               </button>
             )}
           </div>

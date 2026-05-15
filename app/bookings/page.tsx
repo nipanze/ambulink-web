@@ -107,17 +107,19 @@ export default function BookingsPage() {
                         )}
                       </td>
                       <td className="px-4 py-3">
-                        {b.payment_status === 'unpaid' ? (
+                        {b.payment_status === 'paid' ? (
+                          <div className="flex items-center gap-1 text-green-600 font-bold text-xs">
+                            <CheckCircle2 size={12} /> Paid
+                          </div>
+                        ) : b.fare_amount ? (
                           <button 
                             onClick={() => { setSelectedBooking(b); setPayModal(true) }}
                             className="text-xs font-bold text-green-600 hover:text-green-700 bg-green-50 px-3 py-1 rounded-full border border-green-100 transition-colors"
                           >
-                            Pay Now
+                            Review & Pay
                           </button>
                         ) : (
-                          <div className="flex items-center gap-1 text-green-600 font-bold text-xs">
-                            <CheckCircle2 size={12} /> Paid
-                          </div>
+                          <span className="text-[10px] text-amber-600 font-bold italic animate-pulse">Calculating...</span>
                         )}
                       </td>
                     </tr>
@@ -140,13 +142,13 @@ export default function BookingsPage() {
                   <div className="flex items-center justify-between">
                     <TypeBadge type={b.type} />
                     <div className="flex flex-col items-end">
-                      <span className="font-black text-gray-900">{formatUGX(b.fare_amount)}</span>
-                      {b.payment_status === 'unpaid' && (
+                      <span className="font-black text-gray-900">{b.fare_amount ? formatUGX(b.fare_amount) : 'Processing...'}</span>
+                      {b.payment_status === 'unpaid' && b.fare_amount && (
                         <button 
                           onClick={() => { setSelectedBooking(b); setPayModal(true) }}
-                          className="text-[10px] font-bold text-green-600 mt-1"
+                          className="text-[10px] font-black text-green-600 mt-1 uppercase tracking-wider"
                         >
-                          Pay Now
+                          Confirm & Pay
                         </button>
                       )}
                     </div>
