@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { Search, Filter, Loader2, MapPin, Clock } from 'lucide-react'
+import { Search, Filter, Loader2, MapPin, Clock, CheckCircle2 } from 'lucide-react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { StatusBadge, TypeBadge } from '@/components/shared/Badges'
@@ -19,18 +19,20 @@ export default function BookingsPage() {
   const [payModal, setPayModal] = useState(false)
   const [selectedBooking, setSelectedBooking] = useState<any>(null)
 
+  async function load() {
+    setLoading(true)
+    let q = supabase
+      .from('bookings')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(50)
+    if (filter !== 'all') q = q.eq('status', filter)
+    const { data } = await q
+    setBookings(data ?? [])
+    setLoading(false)
+  }
+
   useEffect(() => {
-    async function load() {
-      let q = supabase
-        .from('bookings')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(50)
-      if (filter !== 'all') q = q.eq('status', filter)
-      const { data } = await q
-      setBookings(data ?? [])
-      setLoading(false)
-    }
     load()
   }, [filter])
 
@@ -73,7 +75,7 @@ export default function BookingsPage() {
               <table className="w-full text-sm">
                 <thead className="border-b border-gray-100 bg-gray-50">
                   <tr>
-                    {['Ref','Type','Status','Pickup','Destination','Amount','Time'].map(h => (
+                    {['Ref','Type','Status','Pickup','Destination','Amount','Time','Payment'].map(h => (
                       <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">{h}</th>
                     ))}
                   </tr>
@@ -104,6 +106,20 @@ export default function BookingsPage() {
                           </>
                         )}
                       </td>
+                      <td className="px-4 py-3">
+                        {b.payment_status === 'unpaid' ? (
+                          <button 
+                            onClick={() => { setSelectedBooking(b); setPayModal(true) }}
+                            className="text-xs font-bold text-green-600 hover:text-green-700 bg-green-50 px-3 py-1 rounded-full border border-green-100 transition-colors"
+                          >
+                            Pay Now
+                          </button>
+                        ) : (
+                          <div className="flex items-center gap-1 text-green-600 font-bold text-xs">
+                            <CheckCircle2 size={12} /> Paid
+                          </div>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -115,12 +131,25 @@ export default function BookingsPage() {
               {filtered.map(b => (
                 <div key={b.id} className="p-4 space-y-3 hover:bg-gray-50 transition-colors">
                   <div className="flex items-center justify-between">
-                    <span className="font-mono text-[10px] text-gray-400">{b.booking_ref}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-[10px] text-gray-400">{b.booking_ref}</span>
+                      {b.payment_status === 'paid' && <CheckCircle2 size={12} className="text-green-600" />}
+                    </div>
                     <StatusBadge status={b.status} />
                   </div>
                   <div className="flex items-center justify-between">
                     <TypeBadge type={b.type} />
-                    <span className="font-black text-gray-900">{formatUGX(b.fare_amount)}</span>
+                    <div className="flex flex-col items-end">
+                      <span className="font-black text-gray-900">{formatUGX(b.fare_amount)}</span>
+                      {b.payment_status === 'unpaid' && (
+                        <button 
+                          onClick={() => { setSelectedBooking(b); setPayModal(true) }}
+                          className="text-[10px] font-bold text-green-600 mt-1"
+                        >
+                          Pay Now
+                        </button>
+                      )}
+                    </div>
                   </div>
                   <div className="space-y-1.5">
                     <div className="flex items-start gap-2 text-sm text-gray-700">
@@ -150,6 +179,16 @@ export default function BookingsPage() {
           </>
         )}
       </div>
+      <PaymentModal 
+        isOpen={payModal}
+        onClose={() => setPayModal(false)}
+        onSuccess={load}
+        booking={{
+          id: selectedBooking?.id || 0,
+          booking_ref: selectedBooking?.booking_ref || '',
+          fare_amount: selectedBooking?.fare_amount || 0
+        }}
+      />
     </div>
   )
 }
