@@ -6,6 +6,8 @@ import { supabase } from '@/lib/supabase'
 import { StatusBadge, TypeBadge } from '@/components/shared/Badges'
 import { timeAgo, formatUGX } from '@/lib/utils'
 import type { Booking, BookingStatus } from '@/lib/types'
+import { toast } from 'sonner'
+import PaymentModal from '@/components/shared/PaymentModal'
 
 const ALL_STATUSES: BookingStatus[] = ['requested','assigned','en_route','at_scene','transporting','completed','cancelled','expired']
 
@@ -14,6 +16,8 @@ export default function BookingsPage() {
   const [loading,  setLoading]  = useState(true)
   const [search,   setSearch]   = useState('')
   const [filter,   setFilter]   = useState<BookingStatus | 'all'>('all')
+  const [payModal, setPayModal] = useState(false)
+  const [selectedBooking, setSelectedBooking] = useState<any>(null)
 
   useEffect(() => {
     async function load() {

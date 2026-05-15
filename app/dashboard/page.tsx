@@ -8,6 +8,7 @@ import { Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import type { Booking } from '@/lib/types'
 import { toast } from 'sonner'
+import PaymentModal from '@/components/shared/PaymentModal'
 
 function DashboardContent() {
   const searchParams = useSearchParams()
@@ -15,6 +16,7 @@ function DashboardContent() {
   const [bookings, setBookings]   = useState<Booking[]>([])
   const [loading,  setLoading]    = useState(true)
   const [sosOpen,  setSosOpen]    = useState(false)
+  const [payModal, setPayModal]    = useState(false)
   const [sosLoading, setSosLoading] = useState(false)
   const [mounted, setMounted] = useState(false)
   const [bookingMode, setBookingMode] = useState<'emergency'|'scheduled'>('emergency')
@@ -196,9 +198,30 @@ function DashboardContent() {
               Pickup: {activeBooking.pickup_address || 'Current Location'}
             </p>
           </div>
-          <a href={`/track?booking=${activeBooking.id}`} className="btn-primary text-xs py-1.5 px-4 rounded-full">Track</a>
+          <div className="flex flex-col gap-2">
+            <a href={`/track?booking=${activeBooking.id}`} className="btn-primary text-[10px] py-1.5 px-3 rounded-full text-center">Track</a>
+            {activeBooking.payment_status === 'unpaid' && (
+              <button 
+                onClick={() => setPayModal(true)}
+                className="bg-green-600 text-white text-[10px] font-bold py-1.5 px-3 rounded-full hover:bg-green-700 transition-colors"
+              >
+                Pay Now
+              </button>
+            )}
+          </div>
         </div>
       )}
+
+      <PaymentModal 
+        isOpen={payModal}
+        onClose={() => setPayModal(false)}
+        onSuccess={fetchBookings}
+        booking={{
+          id: activeBooking?.id || 0,
+          booking_ref: activeBooking?.booking_ref || '',
+          fare_amount: activeBooking?.fare_amount || 0
+        }}
+      />
 
       {/* SOS Button Area */}
       {!activeBooking && (
