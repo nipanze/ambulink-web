@@ -64,6 +64,7 @@ export async function POST(req: NextRequest) {
         highway_landmark:    body.highway_landmark,
         institution_id:      body.institution_id,
         is_priority:         body.is_priority ?? false,
+        fare_amount:         (body.type === 'emergency' || !body.scheduled_at) ? 50000 : null
       })
       .select()
       .single()
