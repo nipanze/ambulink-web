@@ -34,6 +34,22 @@ export default function BookingsPage() {
 
   useEffect(() => {
     load()
+
+    // Real-time listener for fare updates and status changes
+    const channel = supabase
+      .channel('patient-bookings-realtime')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'bookings' 
+      }, () => {
+        load() // Reload list when anything changes
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, [filter])
 
   const filtered = bookings.filter(b =>
