@@ -275,8 +275,15 @@ Scheduled bookings remain in a `requested` status until 30 minutes before the pi
 2. Runs the **Nearest Driver Algorithm** to find available units.
 3. Auto-assigns the driver and triggers a patient notification.
 
+### Admin Appraisal Workflow (Negotiation)
+To ensure fair pricing for complex scheduled trips, AmbuLink uses an "Appraisal First" model:
+1. **Request**: Patient schedules a trip; UI displays `Calculating Fare...`.
+2. **Appraisal**: Admin reviews the request and sets a `fare_amount`.
+3. **Automated Notification**: A database trigger detects the fare change and pushes an instant notification to the patient.
+4. **Real-time Checkout**: The patient's UI automatically unlocks the **"Review & Pay"** button, triggering the Mobile Money simulation.
+
 ### Automated Notifications
-The system uses a database trigger `trg_booking_status_notifications` to eliminate the need for manual API-level notification code. Any status update on the `bookings` table (via Driver App, Admin Panel, or Auto-Dispatch) instantly creates an entry in the `notifications` table, which is pushed to the frontend via **Supabase Realtime**.
+The system uses a database trigger `trg_booking_status_notifications` to eliminate the need for manual API-level notification code. Any status update on the `bookings` table (via Driver App, Admin Panel, or Auto-Dispatch) or a **fare appraisal** instantly creates an entry in the `notifications` table, which is pushed to the frontend via **Supabase Realtime**.
 
 ---
 
