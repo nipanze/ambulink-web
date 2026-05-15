@@ -19,6 +19,15 @@ Developed by students at **Kampala International University**, AmbuLink addresse
 
 > *"This is not just a software project — it is a response to a national health emergency challenge, designed by Ugandan students for the benefit of Ugandan communities."*
 
+## 🧠 What Makes AmbuLink "Smart"?
+
+AmbuLink replaces the delays of human decision-making with the speed of mathematical algorithms.
+
+1. **Autonomous Dispatcher**: Uses the Haversine formula and OSRM routing to instantly match emergencies with the nearest active driver in `<180ms`.
+2. **Predictive Appointment Logic**: The system "wakes up" 30 minutes before a scheduled trip to scan the fleet and auto-assign a driver without human intervention.
+3. **Database Self-Awareness**: Uses PostgreSQL triggers to monitor status changes. The system "knows" when a driver arrives at a scene and pushes real-time alerts to patients automatically.
+4. **Intelligent Triage**: Automatically prioritizes high-impact SOS requests over routine transport using role-based priority flagging.
+
 ---
 
 ## 📸 Screenshots
@@ -165,12 +174,14 @@ System-level alerts are surfaced in a dedicated notifications panel. Admins see 
 - **Real-Time Leaflet & OSRM Tracking** — Live ambulance location with high-precision OSRM routing
 - **Live Velocity Simulation** — Real-time speed monitoring (KM/H) for both patient and driver
 - **"Big Hero" Countdown Clock** — Digital-style MM:SS countdown with route recalculation
-- **Scheduled Bookings** — Future-date transport with admin assignment
+- **Scheduled Booking Engine** — Future-date transport with automated driver assignment 30 mins before pickup
+- **Real-time Status Triggers** — Database-level notifications for "At Scene", "En Route", and "Assigned" events
 - **Institutional Emergency Portal** — Priority dispatch for registered organisations
 - **Highway Accident Reporting** — GPS pin-drop for road corridor incidents
+- **Global Action Pattern** — Persistent "Schedule" access from any page via unified TopBar
 - **Admin Dashboard** — Analytics, driver management, audit logs, and reporting
 - **Role-Based Access Control** — Patients, drivers, institutional reps, and admins
-- **Push Notification System** — Firebase Cloud Messaging for all booking events
+- **Push Notification System** — Firebase Cloud Messaging & In-App real-time alerts for all booking events
 
 ---
 
@@ -253,6 +264,19 @@ Open [http://localhost:3000](http://localhost:3000)
 | Admin | admin@ambulink.ug | ambulink@2026 |
 | Driver | driver.ssali@ambulink.ug | ambulink@2026 |
 | Patient / User | patient.mukisa@ambulink.ug | ambulink@2026 |
+
+---
+
+## ⚙️ Backend Logic
+
+### Scheduled Dispatch Engine
+Scheduled bookings remain in a `requested` status until 30 minutes before the pickup time. A PostgreSQL background process (compatible with `pg_cron`) calls `fn_process_scheduled_bookings()`, which:
+1. Identifies bookings due within 30 minutes.
+2. Runs the **Nearest Driver Algorithm** to find available units.
+3. Auto-assigns the driver and triggers a patient notification.
+
+### Automated Notifications
+The system uses a database trigger `trg_booking_status_notifications` to eliminate the need for manual API-level notification code. Any status update on the `bookings` table (via Driver App, Admin Panel, or Auto-Dispatch) instantly creates an entry in the `notifications` table, which is pushed to the frontend via **Supabase Realtime**.
 
 ---
 
