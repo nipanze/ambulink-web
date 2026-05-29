@@ -37,8 +37,9 @@ export default function LandingPage() {
       },
       (error) => {
         console.error('GPS Error:', error)
-        toast.error('Failed to acquire location. Please ensure GPS is enabled.')
-        setModalOpen(false)
+        toast.error('Failed to acquire precise GPS. Using fallback location.')
+        // Fallback to a default location (Kampala Center) for testing or when GPS is unavailable
+        setCoords({ lat: 0.3476, lng: 32.5825 })
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     )
