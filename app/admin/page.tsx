@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { StatusBadge, TypeBadge } from '@/components/shared/Badges'
 import { timeAgo, formatUGX } from '@/lib/utils'
 import type { BookingOverview, DailyStats } from '@/lib/types'
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts'
 
 export default function AdminDashboard() {
   const [overview, setOverview] = useState<BookingOverview[]>([])
@@ -140,20 +140,52 @@ export default function AdminDashboard() {
             ))}
           </div>
 
-          {/* Revenue chart */}
+          {/* Charts Row */}
           {stats.length > 0 && (
-            <div className="card">
-              <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
-                <TrendingUp size={18} className="text-green-500" /> Bookings (Last 14 Days)
-              </h2>
-              <ResponsiveContainer width="100%" height={200}>
-                <AreaChart data={stats}>
-                  <XAxis dataKey="stat_date" tick={{ fontSize: 11 }} tickFormatter={d => d.slice(5)} />
-                  <YAxis tick={{ fontSize: 11 }} />
-                  <Tooltip formatter={(v: any) => [v, 'Bookings']} labelFormatter={l => `Date: ${l}`} />
-                  <Area type="monotone" dataKey="total_bookings" stroke="#DC2626" fill="#fee2e2" strokeWidth={2} />
-                </AreaChart>
-              </ResponsiveContainer>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="card">
+                <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
+                  <TrendingUp size={18} className="text-green-500" /> Bookings Trend (14 Days)
+                </h2>
+                <ResponsiveContainer width="100%" height={200}>
+                  <AreaChart data={stats}>
+                    <XAxis dataKey="stat_date" tick={{ fontSize: 11 }} tickFormatter={d => d.slice(5)} />
+                    <YAxis tick={{ fontSize: 11 }} />
+                    <Tooltip formatter={(v: any) => [v, 'Bookings']} labelFormatter={l => `Date: ${l}`} />
+                    <Area type="monotone" dataKey="total_bookings" stroke="#DC2626" fill="#fee2e2" strokeWidth={2} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+
+              <div className="card">
+                <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
+                  <span className="text-blue-500">O</span> Recent Request Distribution
+                </h2>
+                <ResponsiveContainer width="100%" height={200}>
+                  <PieChart>
+                    <Pie
+                      data={[
+                        { name: 'Emergency SOS', value: overview.filter(b => b.booking_type === 'emergency').length, color: '#ef4444' },
+                        { name: 'Highway Alert', value: overview.filter(b => b.booking_type === 'highway').length, color: '#f59e0b' },
+                        { name: 'Inst. Scheduled', value: overview.filter(b => b.booking_type === 'scheduled').length, color: '#a855f7' }
+                      ].filter(d => d.value > 0)}
+                      cx="50%" cy="50%" innerRadius={60} outerRadius={80} dataKey="value" stroke="none"
+                    >
+                      {
+                        [
+                          { name: 'Emergency SOS', value: overview.filter(b => b.booking_type === 'emergency').length, color: '#ef4444' },
+                          { name: 'Highway Alert', value: overview.filter(b => b.booking_type === 'highway').length, color: '#f59e0b' },
+                          { name: 'Inst. Scheduled', value: overview.filter(b => b.booking_type === 'scheduled').length, color: '#a855f7' }
+                        ].filter(d => d.value > 0).map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))
+                      }
+                    </Pie>
+                    <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                    <Legend iconType="circle" wrapperStyle={{ fontSize: '11px', fontWeight: 'bold' }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
             </div>
           )}
 

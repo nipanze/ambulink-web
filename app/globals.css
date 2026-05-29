@@ -46,22 +46,57 @@
   }
 }
 
-/* Pulsing ambulance marker */
-.ambulance-marker { animation: markerPulse 1.5s ease-in-out infinite; }
-@keyframes markerPulse {
-  0%, 100% { transform: scale(1); }
-  50%       { transform: scale(1.15); }
+@layer components {
+  /* ... existing components ... */
+  .glass {
+    @apply bg-white/10 backdrop-blur-md border border-white/20 shadow-xl;
+  }
+  
+  .glass-dark {
+    @apply bg-black/40 backdrop-blur-lg border border-white/10 shadow-2xl;
+  }
+
+  .action-card {
+    @apply relative overflow-hidden rounded-3xl p-8 transition-all duration-500 
+           hover:scale-[1.02] active:scale-100 cursor-pointer flex flex-col justify-between
+           min-h-[280px] shadow-2xl;
+  }
+
+  .action-card-sos {
+    @apply bg-gradient-to-br from-red-600 to-red-900 text-white;
+  }
+
+  .action-card-highway {
+    @apply bg-gradient-to-br from-amber-500 to-amber-700 text-white;
+  }
+
+  .action-card-institutional {
+    @apply bg-gradient-to-br from-blue-600 to-blue-900 text-white;
+  }
+
+  .btn-premium {
+    @apply px-6 py-3 rounded-full font-bold text-sm tracking-wider uppercase
+           transition-all duration-300 transform hover:translate-y-[-2px]
+           active:translate-y-[0px] shadow-lg;
+  }
 }
 
-/* Status dot */
-.status-dot-online  { @apply w-2 h-2 rounded-full bg-green-500 animate-pulse; }
-.status-dot-offline { @apply w-2 h-2 rounded-full bg-gray-400; }
-
-.animate-pulse-slow {
-  animation: pulse-slow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+/* Sophisticated SOS Pulse */
+@keyframes sos-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4); }
+  70% { box-shadow: 0 0 0 40px rgba(220, 38, 38, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
 }
 
-@keyframes pulse-slow {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: .85; transform: scale(0.98); }
+.animate-sos-pulse {
+  animation: sos-pulse 2s infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
 }

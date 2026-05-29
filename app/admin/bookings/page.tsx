@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Loader2, Search, RefreshCw, MapPin, Clock, X, ChevronRight } from 'lucide-react'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
@@ -16,6 +16,7 @@ export default function AdminBookingsPage() {
   const [onlineDrivers, setOnlineDrivers] = useState<any[]>([])
   const [editingFare, setEditingFare] = useState<number | null>(null)
   const [newFare, setNewFare] = useState('')
+  const [expandedRow, setExpandedRow] = useState<number | null>(null)
 
   async function load() {
     setLoading(true)
@@ -127,52 +128,89 @@ export default function AdminBookingsPage() {
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {filtered.map(b => (
-                    <tr key={b.booking_id} className={`hover:bg-gray-50 transition-colors ${b.is_priority ? 'bg-red-50/40' : ''}`}>
-                      <td className="px-3 py-3">
-                        <PriorityBadge isPriority={b.is_priority} />
-                      </td>
-                      <td className="px-3 py-3 font-mono text-xs text-gray-600">{b.booking_ref}</td>
-                      <td className="px-3 py-3"><TypeBadge type={b.booking_type} /></td>
-                      <td className="px-3 py-3"><StatusBadge status={b.status} /></td>
-                      <td className="px-3 py-3">
-                        <p className="font-medium text-gray-800 whitespace-nowrap">{b.patient_name}</p>
-                        <p className="text-xs text-gray-400">{b.patient_phone}</p>
-                      </td>
-                      <td className="px-3 py-3 max-w-[130px]">
-                        <p className="text-gray-700 text-xs truncate">{b.pickup_address || '—'}</p>
-                      </td>
-                      <td className="px-3 py-3 whitespace-nowrap text-gray-700">{b.driver_name || '—'}</td>
-                      <td className="px-3 py-3 font-mono text-xs text-gray-500">{b.vehicle_plate || '—'}</td>
-                      <td className="px-3 py-3 whitespace-nowrap">
-                        {editingFare === b.booking_id ? (
-                          <div className="flex items-center gap-1">
-                            <input 
-                              autoFocus 
-                              className="w-20 px-2 py-1 text-xs border rounded" 
-                              value={newFare} 
-                              onChange={e => setNewFare(e.target.value)}
-                              onKeyDown={e => e.key === 'Enter' && saveFare(b.booking_id)}
-                            />
-                            <button onClick={() => saveFare(b.booking_id)} className="text-green-600 font-bold">✓</button>
-                          </div>
-                        ) : (
-                          <button 
-                            onClick={() => { setEditingFare(b.booking_id); setNewFare(String(b.fare_amount || '')) }}
-                            className="hover:underline font-bold text-gray-700"
-                          >
-                            {b.fare_amount ? formatUGX(b.fare_amount) : 'Set Fare'}
-                          </button>
-                        )}
-                      </td>
-                      <td className="px-3 py-3 text-gray-400 whitespace-nowrap text-xs">{timeAgo(b.created_at)}</td>
-                      <td className="px-3 py-3 text-right">
-                        {b.status === 'requested' && (
-                          <button onClick={() => openAssign(b.booking_id)} className="btn-primary text-[10px] py-1 px-2 whitespace-nowrap">
-                            Assign Driver
-                          </button>
-                        )}
-                      </td>
-                    </tr>
+                    <React.Fragment key={b.booking_id}>
+                      <tr onClick={() => setExpandedRow(expandedRow === b.booking_id ? null : b.booking_id)} className={`hover:bg-gray-50 transition-colors cursor-pointer ${b.is_priority ? 'bg-red-50/40' : ''}`}>
+                        <td className="px-3 py-3">
+                          <PriorityBadge isPriority={b.is_priority} />
+                        </td>
+                        <td className="px-3 py-3 font-mono text-xs text-gray-600">{b.booking_ref}</td>
+                        <td className="px-3 py-3"><TypeBadge type={b.booking_type} /></td>
+                        <td className="px-3 py-3"><StatusBadge status={b.status} /></td>
+                        <td className="px-3 py-3">
+                          <p className="font-medium text-gray-800 whitespace-nowrap">{b.patient_name}</p>
+                          <p className="text-xs text-gray-400">{b.patient_phone}</p>
+                        </td>
+                        <td className="px-3 py-3 max-w-[130px]">
+                          <p className="text-gray-700 text-xs truncate">{b.pickup_address || '—'}</p>
+                        </td>
+                        <td className="px-3 py-3 whitespace-nowrap text-gray-700">{b.driver_name || '—'}</td>
+                        <td className="px-3 py-3 font-mono text-xs text-gray-500">{b.vehicle_plate || '—'}</td>
+                        <td className="px-3 py-3 whitespace-nowrap" onClick={e => e.stopPropagation()}>
+                          {editingFare === b.booking_id ? (
+                            <div className="flex items-center gap-1">
+                              <input 
+                                autoFocus 
+                                className="w-20 px-2 py-1 text-xs border rounded" 
+                                value={newFare} 
+                                onChange={e => setNewFare(e.target.value)}
+                                onKeyDown={e => e.key === 'Enter' && saveFare(b.booking_id)}
+                              />
+                              <button onClick={() => saveFare(b.booking_id)} className="text-green-600 font-bold">✓</button>
+                            </div>
+                          ) : (
+                            <button 
+                              onClick={() => { setEditingFare(b.booking_id); setNewFare(String(b.fare_amount || '')) }}
+                              className="hover:underline font-bold text-gray-700"
+                            >
+                              {b.fare_amount ? formatUGX(b.fare_amount) : 'Set Fare'}
+                            </button>
+                          )}
+                        </td>
+                        <td className="px-3 py-3 text-gray-400 whitespace-nowrap text-xs">{timeAgo(b.created_at)}</td>
+                        <td className="px-3 py-3 text-right" onClick={e => e.stopPropagation()}>
+                          {b.status === 'requested' && (
+                            <button onClick={() => openAssign(b.booking_id)} className="btn-primary text-[10px] py-1 px-2 whitespace-nowrap">
+                              Assign Driver
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                      {expandedRow === b.booking_id && (
+                        <tr className="bg-gray-100/50 shadow-inner">
+                          <td colSpan={11} className="p-6">
+                            <div className="grid grid-cols-4 gap-4 text-xs">
+                              <div>
+                                <p className="font-bold text-gray-500 uppercase tracking-widest mb-2">Timeline</p>
+                                <ul className="space-y-1 text-gray-700">
+                                  <li><span className="font-semibold w-24 inline-block">Submitted:</span> {new Date(b.created_at).toLocaleString()}</li>
+                                  <li><span className="font-semibold w-24 inline-block">Dispatched:</span> {b.assigned_at ? new Date(b.assigned_at).toLocaleString() : 'Pending'}</li>
+                                  <li><span className="font-semibold w-24 inline-block">Picked Up:</span> {b.pickup_at ? new Date(b.pickup_at).toLocaleString() : 'Pending'}</li>
+                                  <li><span className="font-semibold w-24 inline-block">Completed:</span> {b.dropoff_at ? new Date(b.dropoff_at).toLocaleString() : 'Pending'}</li>
+                                </ul>
+                              </div>
+                              <div>
+                                <p className="font-bold text-gray-500 uppercase tracking-widest mb-2">GPS Coordinates</p>
+                                <p className="text-gray-700 font-mono">Lat: {b.pickup_latitude || 'N/A'}</p>
+                                <p className="text-gray-700 font-mono">Lng: {b.pickup_longitude || 'N/A'}</p>
+                                {(b.pickup_latitude && b.pickup_longitude) && (
+                                  <a href={`https://www.google.com/maps?q=${b.pickup_latitude},${b.pickup_longitude}`} target="_blank" className="text-blue-600 hover:underline mt-2 inline-block">View on Maps →</a>
+                                )}
+                              </div>
+                              <div className="col-span-2">
+                                <p className="font-bold text-gray-500 uppercase tracking-widest mb-2">Medical Profile Snippet</p>
+                                <p className="text-gray-700"><span className="font-semibold">Blood Group:</span> {b.blood_group || 'Unknown'}</p>
+                                <p className="text-gray-700 line-clamp-2"><span className="font-semibold">Allergies:</span> {b.allergies || 'None recorded'}</p>
+                                {b.emergency_contact_phone && (
+                                  <p className="text-gray-700 mt-2 text-[10px] uppercase font-bold text-red-600">
+                                    SOS Contact: {b.emergency_contact_name} ({b.emergency_contact_phone})
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
                   ))}
                 </tbody>
               </table>

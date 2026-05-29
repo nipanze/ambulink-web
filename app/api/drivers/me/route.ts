@@ -149,9 +149,14 @@ export async function PATCH(req: NextRequest) {
     }
 
     if (body.booking_id && body.status) {
+      const updatePayload: any = { status: body.status, updated_at: new Date().toISOString() }
+      if (body.action === 'decline') {
+        updatePayload.driver_id = null
+      }
+
       const { error } = await result.supabase
         .from('bookings')
-        .update({ status: body.status, updated_at: new Date().toISOString() })
+        .update(updatePayload)
         .eq('id', body.booking_id)
         .eq('driver_id', result.driver.id)
       if (error) throw error

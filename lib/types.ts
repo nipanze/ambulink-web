@@ -195,6 +195,7 @@ export interface BookingOverview {
   created_at:        string
   assigned_at?:      string
   scheduled_at?:     string
+  pickup_at?:        string
   dropoff_at?:       string
 }
 

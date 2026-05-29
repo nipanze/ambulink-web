@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
-import { Ambulance, MapPin, Navigation, Phone, CheckCircle, Clock, Loader2, Power, AlertTriangle, ShieldCheck } from 'lucide-react'
+import { Ambulance, MapPin, Navigation, Phone, CheckCircle, Clock, Loader2, Power, AlertTriangle, ShieldCheck, XCircle } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { StatusBadge, TypeBadge } from '@/components/shared/Badges'
 import { timeAgo } from '@/lib/utils'
@@ -266,27 +266,48 @@ export default function DriverDashboard() {
                     </div>
                  </div>
 
-                 <div className="flex gap-2">
-                    <a href={`tel:${b.patient?.user?.phone ?? ''}`} className="flex-1 flex items-center justify-center gap-2 bg-gray-100 rounded-xl p-3 text-gray-900 font-black text-xs hover:bg-gray-200 transition-all">
-                       <Phone size={14} /> CALL PATIENT
-                    </a>
-                    <a href={`https://www.google.com/maps/dir/?api=1&destination=${b.pickup_latitude},${b.pickup_longitude}`} target="_blank" className="flex-1 flex items-center justify-center gap-2 bg-blue-600 rounded-xl p-3 text-white font-black text-xs shadow-lg shadow-blue-100">
-                       <Navigation size={14} /> NAVIGATE
-                    </a>
-                 </div>
+                  <div className="flex gap-2">
+                     <a href={`tel:${b.patient?.user?.phone ?? ''}`} className="flex-1 flex items-center justify-center gap-2 bg-gray-100 rounded-xl p-3 text-gray-900 font-black text-xs hover:bg-gray-200 transition-all">
+                        <Phone size={14} /> CALL PATIENT
+                     </a>
+                     <a href={`/driver/nav?bookingId=${b.id}`} className="flex-1 flex items-center justify-center gap-2 bg-blue-600 rounded-xl p-3 text-white font-black text-xs shadow-lg shadow-blue-100">
+                        <Navigation size={14} /> NAVIGATE
+                     </a>
+                  </div>
 
-                 {/* Status Transition buttons */}
-                 {activeTab === 'assigned' && (
-                   <div className="pt-2 border-t border-gray-100 grid grid-cols-2 gap-2">
-                      {b.status === 'assigned' && (
-                        <button 
-                          onClick={() => updateBookingStatus(b.id, 'en_route')}
-                          disabled={!!updating}
-                          className="col-span-2 btn-primary flex items-center justify-center gap-2 py-4 text-base font-black"
-                        >
-                          {updating === b.id ? <Loader2 className="animate-spin" /> : <Navigation size={20} />} START EN-ROUTE
-                        </button>
-                      )}
+                  {/* Status Transition buttons */}
+                  {activeTab === 'assigned' && (
+                    <div className="pt-2 border-t border-gray-100 grid grid-cols-2 gap-2">
+                       {b.status === 'assigned' && (
+                         <>
+                           <button 
+                             onClick={() => updateBookingStatus(b.id, 'en_route')}
+                             disabled={!!updating}
+                             className="bg-green-600 text-white rounded-xl py-4 flex items-center justify-center gap-2 font-black text-sm shadow-lg shadow-green-100"
+                           >
+                             {updating === b.id ? <Loader2 className="animate-spin" /> : <ShieldCheck size={18} />} ACCEPT
+                           </button>
+                           <button 
+                             onClick={async () => {
+                               setUpdating(b.id)
+                               const { data: { session } } = await supabase.auth.getSession()
+                               if (!session) return
+                               // Decline -> back to requested pool for another driver
+                               await fetch('/api/drivers/me', {
+                                 method: 'PATCH',
+                                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+                                 body: JSON.stringify({ booking_id: b.id, status: 'requested', action: 'decline' }),
+                               })
+                               setUpdating(null)
+                               fetchDriverData()
+                             }}
+                             disabled={!!updating}
+                             className="bg-gray-100 text-red-600 rounded-xl py-4 flex items-center justify-center gap-2 font-black text-sm hover:bg-red-50"
+                           >
+                             {updating === b.id ? <Loader2 className="animate-spin" /> : <XCircle size={18} />} DECLINE
+                           </button>
+                         </>
+                       )}
                       {b.status === 'en_route' && (
                         <button 
                           onClick={() => updateBookingStatus(b.id, 'at_scene')}
